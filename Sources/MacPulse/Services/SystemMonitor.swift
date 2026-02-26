@@ -1,0 +1,72 @@
+import Foundation
+import Combine
+
+@MainActor
+@Observable
+public final class SystemMonitor {
+    public var currentSnapshot: SystemSnapshot = .empty
+    public var history = MetricsHistory()
+
+    private var cpuCollector = CPUCollector()
+    private var memoryCollector = MemoryCollector()
+    private var diskCollector = DiskCollector()
+    private var batteryCollector = BatteryCollector()
+    private var networkCollector = NetworkCollector()
+    private var thermalCollector = ThermalCollector()
+    private var diskIOCollector = DiskIOCollector()
+    private var temperatureCollector = TemperatureCollector()
+    private var processCollector = ProcessCollector()
+    private var gpuCollector = GPUCollector()
+
+    public var alertManager = AlertManager()
+
+    private var timer: Timer?
+    private var interval: TimeInterval = 2.0
+
+    public var isReady: Bool { history.count > 0 }
+
+    public init() {}
+
+    public func start() {
+        sample()
+        scheduleTimer()
+    }
+
+    public func stop() {
+        timer?.invalidate()
+        timer = nil
+    }
+
+    public func restart(interval newInterval: TimeInterval) {
+        interval = newInterval
+        stop()
+        scheduleTimer()
+    }
+
+    private func scheduleTimer() {
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.sample()
+            }
+        }
+    }
+
+    private func sample() {
+        let snapshot = SystemSnapshot(
+            timestamp: .now,
+            cpu: cpuCollector.collect(),
+            memory: memoryCollector.collect(),
+            disk: diskCollector.collect(),
+            battery: batteryCollector.collect(),
+            network: networkCollector.collect(),
+            thermal: thermalCollector.collect(),
+            diskIO: diskIOCollector.collect(),
+            temperature: temperatureCollector.collect(),
+            processes: processCollector.collect(),
+            gpu: gpuCollector.collect()
+        )
+        currentSnapshot = snapshot
+        history.append(snapshot)
+        alertManager.evaluate(snapshot: snapshot)
+    }
+}
