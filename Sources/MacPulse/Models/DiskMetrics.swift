@@ -7,7 +7,7 @@ public struct VolumeInfo: Sendable, Identifiable {
     public var totalBytes: UInt64
     public var freeBytes: UInt64
 
-    public var usedBytes: UInt64 { totalBytes - freeBytes }
+    public var usedBytes: UInt64 { totalBytes > freeBytes ? totalBytes - freeBytes : 0 }
     public var usedFraction: Double {
         totalBytes > 0 ? Double(usedBytes) / Double(totalBytes) : 0
     }

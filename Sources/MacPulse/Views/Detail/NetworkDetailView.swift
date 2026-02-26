@@ -80,6 +80,48 @@ public struct NetworkDetailView: View {
                     }
                     .padding(.vertical, 4)
                 }
+
+                if !net.topProcesses.isEmpty {
+                    Divider()
+
+                    Text("Top Processes by Network (cumulative)")
+                        .font(.headline)
+
+                    Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
+                        GridRow {
+                            Text("Process")
+                                .fontWeight(.semibold)
+                                .frame(minWidth: 120, alignment: .leading)
+                            Text("Sent")
+                                .fontWeight(.semibold)
+                                .frame(width: 90, alignment: .trailing)
+                            Text("Received")
+                                .fontWeight(.semibold)
+                                .frame(width: 90, alignment: .trailing)
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                        Divider()
+
+                        ForEach(net.topProcesses) { proc in
+                            GridRow {
+                                Text(proc.name)
+                                    .lineLimit(1)
+                                    .frame(minWidth: 120, alignment: .leading)
+                                Text(FormatHelpers.bytes(proc.bytesSent))
+                                    .monospacedDigit()
+                                    .frame(width: 90, alignment: .trailing)
+                                    .foregroundStyle(.blue)
+                                Text(FormatHelpers.bytes(proc.bytesReceived))
+                                    .monospacedDigit()
+                                    .frame(width: 90, alignment: .trailing)
+                                    .foregroundStyle(.green)
+                            }
+                            .font(.system(.body, design: .monospaced))
+                        }
+                    }
+                }
             }
         }
     }

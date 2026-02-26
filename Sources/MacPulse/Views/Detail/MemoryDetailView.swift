@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 public struct MemoryDetailView: View {
     public let monitor: SystemMonitor
@@ -27,6 +28,16 @@ public struct MemoryDetailView: View {
                     }
 
                     Spacer()
+
+                    // Pressure indicator
+                    VStack(spacing: 4) {
+                        Image(systemName: pressureIcon)
+                            .font(.title)
+                            .foregroundStyle(pressureColor)
+                        Text(mem.pressureLevel.label)
+                            .font(.caption.bold())
+                            .foregroundStyle(pressureColor)
+                    }
                 }
 
                 Divider()
@@ -53,7 +64,75 @@ public struct MemoryDetailView: View {
                     yDomain: 0...1.0,
                     formatAsPercent: true
                 )
+
+                Divider()
+
+                Text("Memory Pressure Over Time")
+                    .font(.headline)
+
+                let pressureData = monitor.history.memoryPressureHistory
+                Chart {
+                    ForEach(Array(pressureData.enumerated()), id: \.1.0) { _, point in
+                        PointMark(
+                            x: .value("Time", point.0),
+                            y: .value("Level", point.1)
+                        )
+                        .foregroundStyle(pressureColorForValue(point.1))
+
+                        LineMark(
+                            x: .value("Time", point.0),
+                            y: .value("Level", point.1)
+                        )
+                        .foregroundStyle(.gray.opacity(0.3))
+                        .interpolationMethod(.stepCenter)
+                    }
+                }
+                .chartYScale(domain: 0...2)
+                .chartYAxis {
+                    AxisMarks(values: [0, 1, 2]) { value in
+                        AxisGridLine()
+                        AxisValueLabel {
+                            if let v = value.as(Int.self) {
+                                Text(MemoryPressureLevel(rawValue: v)?.label ?? "")
+                            }
+                        }
+                    }
+                }
+                .chartXAxis {
+                    AxisMarks(values: .stride(by: .minute, count: 2)) { _ in
+                        AxisGridLine()
+                        AxisValueLabel(format: .dateTime.minute().second())
+                    }
+                }
+                .frame(height: 150)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Memory pressure history chart")
+                .accessibilityValue("Current: \(mem.pressureLevel.label)")
             }
+        }
+    }
+
+    private var pressureColor: Color {
+        switch mem.pressureLevel {
+        case .normal: .green
+        case .warning: .orange
+        case .critical: .red
+        }
+    }
+
+    private var pressureIcon: String {
+        switch mem.pressureLevel {
+        case .normal: "gauge.with.dots.needle.0percent"
+        case .warning: "gauge.with.dots.needle.50percent"
+        case .critical: "gauge.with.dots.needle.100percent"
+        }
+    }
+
+    private func pressureColorForValue(_ value: Int) -> Color {
+        switch value {
+        case 0: .green
+        case 1: .orange
+        default: .red
         }
     }
 

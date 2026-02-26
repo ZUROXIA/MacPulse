@@ -1,11 +1,34 @@
 import SwiftUI
 import MacPulseCore
 
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    var openDetailWindow: (() -> Void)?
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.activate(ignoringOtherApps: true)
+        // Small delay to let SwiftUI scenes register
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [self] in
+            openDetailWindow?()
+        }
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag {
+            openDetailWindow?()
+            NSApp.activate(ignoringOtherApps: true)
+        }
+        return true
+    }
+}
+
 @main
 struct MacPulseApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var monitor = SystemMonitor()
     @State private var appState = AppState()
     @State private var settings = AppSettings()
+    @State private var updateChecker = UpdateChecker()
+    @Environment(\.openWindow) private var openWindow
 
     var body: some Scene {
         MenuBarExtra {
@@ -14,18 +37,35 @@ struct MacPulseApp: App {
             HStack(spacing: 4) {
                 Image(systemName: "gauge.medium")
                 if monitor.isReady {
-                    if settings.showCPUInMenuBar {
-                        Text(FormatHelpers.percentInt(monitor.currentSnapshot.cpu.totalUsage))
-                            .monospacedDigit()
+                    if settings.menuBarGraphMode {
+                        MenuBarGraphView(
+                            data: Array(monitor.history.cpuHistory.suffix(20).map(\.1))
+                        )
+                    } else {
+                        if settings.showCPUInMenuBar {
+                            Text(FormatHelpers.percentInt(monitor.currentSnapshot.cpu.totalUsage))
+                                .monospacedDigit()
+                        }
+                        if settings.showMemoryInMenuBar {
+                            Text("M:" + FormatHelpers.percentInt(monitor.currentSnapshot.memory.usedFraction))
+                                .monospacedDigit()
+                        }
+                        if settings.showNetworkInMenuBar {
+                            Text("\u{2191}\(FormatHelpers.bytesPerSecond(monitor.currentSnapshot.network.totalSendRate))")
+                                .monospacedDigit()
+                        }
                     }
-                    if settings.showMemoryInMenuBar {
-                        Text("M:" + FormatHelpers.percentInt(monitor.currentSnapshot.memory.usedFraction))
-                            .monospacedDigit()
-                    }
-                    if settings.showNetworkInMenuBar {
-                        Text("\u{2191}\(FormatHelpers.bytesPerSecond(monitor.currentSnapshot.network.totalSendRate))")
-                            .monospacedDigit()
-                    }
+                }
+            }
+            .onAppear {
+                monitor.start()
+                appDelegate.openDetailWindow = { [openWindow] in
+                    openWindow(id: "detail")
+                }
+                // Open on launch
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    NSApp.activate(ignoringOtherApps: true)
+                    openWindow(id: "detail")
                 }
             }
         }
@@ -38,8 +78,19 @@ struct MacPulseApp: App {
         .defaultSize(width: 800, height: 600)
 
         Settings {
-            SettingsView(monitor: monitor, settings: settings)
-                .frame(width: 400, height: 300)
+            VStack(spacing: 0) {
+                SettingsView(monitor: monitor, settings: settings)
+                Divider()
+                HStack {
+                    CheckForUpdatesView(updateChecker: updateChecker)
+                    Spacer()
+                    Text("v\(updateChecker.currentVersion)")
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                }
+                .padding()
+            }
+            .frame(width: 400, height: 340)
         }
     }
 
@@ -47,5 +98,6 @@ struct MacPulseApp: App {
         _monitor = State(initialValue: SystemMonitor())
         _appState = State(initialValue: AppState())
         _settings = State(initialValue: AppSettings())
+        _updateChecker = State(initialValue: UpdateChecker())
     }
 }

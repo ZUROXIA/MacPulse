@@ -17,6 +17,7 @@ public final class AlertManager {
     private var highCPUSince: Date?
     private var lastCPUAlertTime: Date?
     private var lastDiskAlertTime: Date?
+    private var hasRequestedPermission = false
 
     /// Minimum interval between repeated alerts of the same type.
     private let alertCooldown: TimeInterval = 300 // 5 minutes
@@ -29,11 +30,13 @@ public final class AlertManager {
         self.diskAlertEnabled = defaults.object(forKey: "diskAlertEnabled") != nil
             ? defaults.bool(forKey: "diskAlertEnabled")
             : true
-
-        requestPermission()
+        // Don't request notification permission here — defer until first alert
     }
 
-    private func requestPermission() {
+    /// Request notification permission lazily, only when we actually need to send.
+    private func ensurePermission() {
+        guard !hasRequestedPermission else { return }
+        hasRequestedPermission = true
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 
@@ -93,6 +96,8 @@ public final class AlertManager {
     }
 
     private func sendNotification(title: String, body: String) {
+        ensurePermission()
+
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body

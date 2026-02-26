@@ -35,6 +35,8 @@ public struct DetailWindow: View {
                     ThermalDetailView(monitor: monitor)
                 case .processes:
                     ProcessListView(monitor: monitor)
+                case .optimize:
+                    OptimizeView(monitor: monitor)
                 case .settings:
                     SettingsView(monitor: monitor)
                 }

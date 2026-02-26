@@ -19,15 +19,32 @@ public final class SystemMonitor {
     private var gpuCollector = GPUCollector()
 
     public var alertManager = AlertManager()
+    private let store = MetricsStore()
+    private var pruneCounter = 0
 
     private var timer: Timer?
     private var interval: TimeInterval = 2.0
+    private var isRunning = false
 
     public var isReady: Bool { history.count > 0 }
 
     public init() {}
 
     public func start() {
+        guard !isRunning else { return }
+        isRunning = true
+
+        // Restore recent history from disk (on background queue)
+        let store = self.store
+        Task.detached {
+            let recent = store.loadRecent(maxAge: 600)
+            await MainActor.run { [weak self] in
+                for snapshot in recent {
+                    self?.history.append(snapshot)
+                }
+            }
+        }
+
         sample()
         scheduleTimer()
     }
@@ -35,11 +52,13 @@ public final class SystemMonitor {
     public func stop() {
         timer?.invalidate()
         timer = nil
+        isRunning = false
     }
 
     public func restart(interval newInterval: TimeInterval) {
         interval = newInterval
         stop()
+        isRunning = true
         scheduleTimer()
     }
 
@@ -68,5 +87,24 @@ public final class SystemMonitor {
         currentSnapshot = snapshot
         history.append(snapshot)
         alertManager.evaluate(snapshot: snapshot)
+
+        // Persist to SQLite on background queue
+        let store = self.store
+        Task.detached {
+            store.save(snapshot)
+        }
+
+        // Update shared defaults for widget
+        let shared = UserDefaults(suiteName: "com.macpulse.shared")
+        shared?.set(snapshot.cpu.totalUsage, forKey: "widget.cpuUsage")
+        shared?.set(snapshot.memory.usedFraction, forKey: "widget.memoryUsage")
+        shared?.set(snapshot.thermal.level.rawValue, forKey: "widget.thermalLevel")
+
+        // Prune old data every ~100 samples
+        pruneCounter += 1
+        if pruneCounter >= 100 {
+            pruneCounter = 0
+            Task.detached { store.prune() }
+        }
     }
 }

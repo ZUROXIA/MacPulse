@@ -4,10 +4,14 @@ public struct FanInfo: Sendable, Identifiable {
     public var id: Int { index }
     public var index: Int
     public var rpm: Int
+    public var minRPM: Int
+    public var maxRPM: Int
 
-    public init(index: Int, rpm: Int) {
+    public init(index: Int, rpm: Int, minRPM: Int = 0, maxRPM: Int = 0) {
         self.index = index
         self.rpm = rpm
+        self.minRPM = minRPM
+        self.maxRPM = maxRPM
     }
 }
 

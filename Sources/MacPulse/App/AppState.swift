@@ -16,6 +16,7 @@ public final class AppState {
         case network = "Network"
         case thermal = "Thermal"
         case processes = "Processes"
+        case optimize = "Optimize"
         case settings = "Settings"
 
         public var id: String { rawValue }
@@ -30,6 +31,7 @@ public final class AppState {
             case .network: "network"
             case .thermal: "thermometer.medium"
             case .processes: "list.number"
+            case .optimize: "wand.and.stars"
             case .settings: "gearshape"
             }
         }

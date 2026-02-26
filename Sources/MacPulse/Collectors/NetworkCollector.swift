@@ -50,10 +50,13 @@ public struct NetworkCollector: MetricsCollector {
 
         interfaces.sort { $0.name < $1.name }
 
+        let topProcs = collectTopNetworkProcesses()
+
         return NetworkMetrics(
             interfaces: interfaces,
             totalSendRate: totalSend,
-            totalReceiveRate: totalRecv
+            totalReceiveRate: totalRecv,
+            topProcesses: topProcs
         )
     }
 
@@ -71,6 +74,13 @@ public struct NetworkCollector: MetricsCollector {
         // Sanity cap: >10 GB/s is unrealistic, treat as counter reset
         let maxReasonableDelta: UInt64 = 10_000_000_000
         return delta > maxReasonableDelta ? 0 : delta
+    }
+
+    /// Per-process network bytes are not available through public macOS APIs.
+    /// The NetworkStatistics private framework or a Network Extension would be needed.
+    /// Returns empty array; the UI gracefully hides the section when empty.
+    private func collectTopNetworkProcesses() -> [ProcessNetworkUsage] {
+        return []
     }
 
     private func readInterfaceCounters() -> [String: (sent: UInt64, received: UInt64)] {

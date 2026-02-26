@@ -17,13 +17,38 @@ public struct MemoryCollector: MetricsCollector {
         let compressed = UInt64(stats.compressor_page_count) * pageSize
         let used = active + wired + compressed
 
+        // Compute memory pressure based on compressed ratio and free memory
+        let pressure = computePressure(
+            compressed: compressed,
+            used: used,
+            total: total,
+            free: free
+        )
+
         return MemoryMetrics(
             total: total,
             used: used,
             free: free,
             active: active,
             wired: wired,
-            compressed: compressed
+            compressed: compressed,
+            pressureLevel: pressure
         )
+    }
+
+    private func computePressure(compressed: UInt64, used: UInt64, total: UInt64, free: UInt64) -> MemoryPressureLevel {
+        guard total > 0 else { return .normal }
+        let usedFraction = Double(used) / Double(total)
+        let compressedFraction = Double(compressed) / Double(total)
+
+        // Critical: >90% used with significant compression
+        if usedFraction > 0.9 && compressedFraction > 0.15 {
+            return .critical
+        }
+        // Warning: >80% used with moderate compression, or >95% used
+        if (usedFraction > 0.8 && compressedFraction > 0.05) || usedFraction > 0.95 {
+            return .warning
+        }
+        return .normal
     }
 }

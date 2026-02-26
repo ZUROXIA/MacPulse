@@ -5,6 +5,7 @@ public struct MenuBarView: View {
     public let appState: AppState
 
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.dismiss) private var dismiss
 
     public init(monitor: SystemMonitor, appState: AppState) {
         self.monitor = monitor
@@ -70,17 +71,23 @@ public struct MenuBarView: View {
 
             Divider()
 
-            Button("Show Details...") {
+            Button("Open MacPulse Window") {
+                dismiss()
+                NSApp.activate(ignoringOtherApps: true)
                 openWindow(id: "detail")
             }
             .keyboardShortcut("d")
 
-            Divider()
-
             Button("Settings...") {
-                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                dismiss()
+                NSApp.activate(ignoringOtherApps: true)
+                // Open detail window on Settings tab
+                appState.selectedTab = .settings
+                openWindow(id: "detail")
             }
             .keyboardShortcut(",")
+
+            Divider()
 
             Button("Quit MacPulse") {
                 NSApplication.shared.terminate(nil)

@@ -11,7 +11,9 @@ public struct TemperatureCollector: MetricsCollector {
         var fans: [FanInfo] = []
         for i in 0..<fanCount {
             let rpm = SMCHelper.readFanRPM(index: i)
-            fans.append(FanInfo(index: i, rpm: rpm))
+            let minRPM = SMCHelper.readFanMinRPM(index: i)
+            let maxRPM = SMCHelper.readFanMaxRPM(index: i)
+            fans.append(FanInfo(index: i, rpm: rpm, minRPM: minRPM, maxRPM: maxRPM))
         }
 
         return TemperatureMetrics(cpuTemp: cpuTemp, gpuTemp: gpuTemp, fans: fans)

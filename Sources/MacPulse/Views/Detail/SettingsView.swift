@@ -38,9 +38,12 @@ public struct SettingsView: View {
 
                 GroupBox("Menu Bar") {
                     VStack(alignment: .leading, spacing: 12) {
-                        Toggle("Show CPU %", isOn: $settings.showCPUInMenuBar)
-                        Toggle("Show Memory %", isOn: $settings.showMemoryInMenuBar)
-                        Toggle("Show Network Rate", isOn: $settings.showNetworkInMenuBar)
+                        Toggle("Graph mode (mini chart)", isOn: $settings.menuBarGraphMode)
+                        if !settings.menuBarGraphMode {
+                            Toggle("Show CPU %", isOn: $settings.showCPUInMenuBar)
+                            Toggle("Show Memory %", isOn: $settings.showMemoryInMenuBar)
+                            Toggle("Show Network Rate", isOn: $settings.showNetworkInMenuBar)
+                        }
                     }
                     .padding(.vertical, 4)
                 }
@@ -52,7 +55,86 @@ public struct SettingsView: View {
                     }
                     .padding(.vertical, 4)
                 }
+
+                GroupBox("Optimize") {
+                    VStack(alignment: .leading, spacing: 16) {
+                        // Thresholds
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Recommendation Thresholds")
+                                .font(.subheadline.bold())
+
+                            thresholdRow(
+                                label: "CPU warning",
+                                value: $settings.cpuWarningThreshold,
+                                range: 0.5...0.99
+                            )
+                            thresholdRow(
+                                label: "CPU critical",
+                                value: $settings.cpuCriticalThreshold,
+                                range: 0.5...1.0
+                            )
+                            thresholdRow(
+                                label: "Disk warning",
+                                value: $settings.diskWarningThreshold,
+                                range: 0.5...0.99
+                            )
+                            thresholdRow(
+                                label: "Battery warning",
+                                value: $settings.batteryWarningThreshold,
+                                range: 0.05...0.5
+                            )
+                        }
+
+                        Divider()
+
+                        // Rule toggles
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Enabled Rules")
+                                .font(.subheadline.bold())
+
+                            Toggle("Memory pressure", isOn: $settings.enableMemoryRule)
+                            Toggle("CPU usage", isOn: $settings.enableCPURule)
+                            Toggle("Disk space", isOn: $settings.enableDiskRule)
+                            Toggle("Thermal state", isOn: $settings.enableThermalRule)
+                            Toggle("Battery level", isOn: $settings.enableBatteryRule)
+                        }
+
+                        Divider()
+
+                        // Behavior
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Behavior")
+                                .font(.subheadline.bold())
+
+                            HStack {
+                                Text("Resource hogs shown")
+                                Spacer()
+                                Picker("", selection: $settings.resourceHogCount) {
+                                    ForEach(AppSettings.hogCountOptions, id: \.self) { count in
+                                        Text("\(count)").tag(count)
+                                    }
+                                }
+                                .frame(width: 80)
+                            }
+
+                            Toggle("Confirm before terminating processes", isOn: $settings.confirmBeforeTerminate)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
             }
+        }
+    }
+
+    private func thresholdRow(label: String, value: Binding<Double>, range: ClosedRange<Double>) -> some View {
+        HStack {
+            Text(label)
+            Spacer()
+            Slider(value: value, in: range, step: 0.05)
+                .frame(width: 150)
+            Text(FormatHelpers.percentInt(value.wrappedValue))
+                .monospacedDigit()
+                .frame(width: 40, alignment: .trailing)
         }
     }
 }

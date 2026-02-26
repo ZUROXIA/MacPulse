@@ -54,6 +54,7 @@ public enum SMCHelper {
     }
 
     private static let kSMCReadKey: UInt8 = 5
+    private static let kSMCWriteKey: UInt8 = 6
     private static let kSMCGetKeyInfo: UInt8 = 9
 
     // MARK: - Public API
@@ -82,6 +83,44 @@ public enum SMCHelper {
         return (Int(bytes.0) << 6) + (Int(bytes.1) >> 2)
     }
 
+    /// Read minimum RPM for fan at given index.
+    public static func readFanMinRPM(index: Int) -> Int {
+        let key = "F\(index)Mn"
+        guard let bytes = readSMCKey(key) else { return 0 }
+        return (Int(bytes.0) << 6) + (Int(bytes.1) >> 2)
+    }
+
+    /// Read maximum RPM for fan at given index.
+    public static func readFanMaxRPM(index: Int) -> Int {
+        let key = "F\(index)Mx"
+        guard let bytes = readSMCKey(key) else { return 0 }
+        return (Int(bytes.0) << 6) + (Int(bytes.1) >> 2)
+    }
+
+    /// Set the minimum (target) RPM for a fan. Requires appropriate privileges.
+    /// Returns true if successful.
+    @discardableResult
+    public static func setFanMinRPM(index: Int, rpm: Int) -> Bool {
+        let key = "F\(index)Mn"
+        // fpe2 format: encode RPM
+        let encoded = UInt16(rpm) << 2
+        let byte0 = UInt8((encoded >> 8) & 0xFF)
+        let byte1 = UInt8(encoded & 0xFF)
+        return writeSMCKey(key, byte0: byte0, byte1: byte1)
+    }
+
+    /// Enable or disable forced (manual) fan mode.
+    /// mode = 1: forced (user controls fan speed)
+    /// mode = 0: auto (system controls fan speed)
+    @discardableResult
+    public static func setFanMode(forced: Bool) -> Bool {
+        let key = "FS! "
+        let mode: UInt16 = forced ? 1 : 0
+        let byte0 = UInt8((mode >> 8) & 0xFF)
+        let byte1 = UInt8(mode & 0xFF)
+        return writeSMCKey(key, byte0: byte0, byte1: byte1)
+    }
+
     // MARK: - Private
 
     private static func readTemperature(key: String) -> Double? {
@@ -99,6 +138,48 @@ public enum SMCHelper {
             result = (result << 8) | UInt32(char)
         }
         return result
+    }
+
+    private static func writeSMCKey(_ key: String, byte0: UInt8, byte1: UInt8) -> Bool {
+        guard let conn = smcService else { return false }
+
+        // First get key info to know the data type and size
+        var inputStruct = SMCKeyData()
+        var outputStruct = SMCKeyData()
+
+        inputStruct.key = fourCharCode(key)
+        inputStruct.data8 = kSMCGetKeyInfo
+
+        var outputSize = MemoryLayout<SMCKeyData>.stride
+        var result = IOConnectCallStructMethod(
+            conn,
+            2,
+            &inputStruct,
+            MemoryLayout<SMCKeyData>.stride,
+            &outputStruct,
+            &outputSize
+        )
+
+        guard result == KERN_SUCCESS else { return false }
+
+        // Now write
+        inputStruct.keyInfo.dataSize = outputStruct.keyInfo.dataSize
+        inputStruct.keyInfo.dataType = outputStruct.keyInfo.dataType
+        inputStruct.data8 = kSMCWriteKey
+        inputStruct.bytes.0 = byte0
+        inputStruct.bytes.1 = byte1
+
+        outputSize = MemoryLayout<SMCKeyData>.stride
+        result = IOConnectCallStructMethod(
+            conn,
+            2,
+            &inputStruct,
+            MemoryLayout<SMCKeyData>.stride,
+            &outputStruct,
+            &outputSize
+        )
+
+        return result == KERN_SUCCESS
     }
 
     private static func readSMCKey(_ key: String) -> (UInt8, UInt8)? {
