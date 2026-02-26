@@ -54,7 +54,13 @@ public struct ProcessListView: View {
                     ? monitor.currentSnapshot.processes.topByMemory
                     : monitor.currentSnapshot.processes.topByCPU
 
-                if processes.isEmpty {
+                if processes.isEmpty && ProcessHelper.isSandboxed {
+                    ContentUnavailableView(
+                        "Process Data Unavailable",
+                        systemImage: "lock.shield",
+                        description: Text("Process enumeration is not available in the App Store version. CPU and memory monitoring remain fully functional.")
+                    )
+                } else if processes.isEmpty {
                     ContentUnavailableView(
                         "No Process Data",
                         systemImage: "list.number",
@@ -99,7 +105,7 @@ public struct ProcessListView: View {
                                 Text(FormatHelpers.bytes(proc.memoryBytes))
                                     .monospacedDigit()
                                     .frame(width: 100, alignment: .trailing)
-                                if ProcessHelper.isSafeToTerminate(pid: proc.pid) {
+                                if !ProcessHelper.isSandboxed && ProcessHelper.isSafeToTerminate(pid: proc.pid) {
                                     Button {
                                         terminateTarget = proc
                                     } label: {

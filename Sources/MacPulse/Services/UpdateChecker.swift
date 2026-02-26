@@ -22,7 +22,9 @@ public final class UpdateChecker {
         self.currentVersion = currentVersion
     }
 
+    /// Check for updates via GitHub API (skipped in App Store builds).
     public func check() async {
+        guard !ProcessHelper.isSandboxed else { return }
         guard !isChecking else { return }
         isChecking = true
         defer { isChecking = false }

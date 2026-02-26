@@ -18,6 +18,7 @@ let package = Package(
             path: "Sources/MacPulseApp",
             linkerSettings: [
                 .linkedFramework("IOKit"),
+                .linkedFramework("StoreKit"),
             ]
         ),
         .executableTarget(

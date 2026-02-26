@@ -425,6 +425,18 @@ test("estimateUserCacheSize returns a value") {
     assert(size >= 0, "Cache size should be >= 0, got \(size)")
 }
 
+test("isSandboxed returns a boolean") {
+    let sandboxed = ProcessHelper.isSandboxed
+    // In test runner (non-sandboxed) this should be false
+    assert(!sandboxed, "Test runner should not be sandboxed")
+}
+
+test("isSandboxed reflects environment") {
+    // Verify the property is based on APP_SANDBOX_CONTAINER_ID
+    let hasEnv = ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] != nil
+    assert(ProcessHelper.isSandboxed == hasEnv, "isSandboxed should match environment variable presence")
+}
+
 // MARK: - RecommendationEngine Tests
 
 print("RecommendationEngine Tests")

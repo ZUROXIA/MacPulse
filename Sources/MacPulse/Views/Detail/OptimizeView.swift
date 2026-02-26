@@ -73,10 +73,14 @@ public struct OptimizeView: View {
 
                 Divider()
 
-                Text("Quick Actions")
-                    .font(.headline)
+                if ProcessHelper.isSandboxed {
+                    sandboxLimitedSection
+                } else {
+                    Text("Quick Actions")
+                        .font(.headline)
 
-                quickActionsRow
+                    quickActionsRow
+                }
 
                 Divider()
 
@@ -257,6 +261,31 @@ public struct OptimizeView: View {
         .accessibilityLabel(Text(verbatim: "\(rec.severity) recommendation: \(rec.title). \(rec.detail)"))
     }
 
+    // MARK: - Sandbox Limited
+
+    private var sandboxLimitedSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Quick Actions")
+                .font(.headline)
+
+            HStack(spacing: 12) {
+                Image(systemName: "lock.shield")
+                    .font(.title2)
+                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Limited in App Store Build")
+                        .font(.subheadline.bold())
+                    Text("Memory purge, DNS flush, and cache clearing require system privileges not available in sandboxed apps. Use Terminal for these operations.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+            .padding()
+            .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 10))
+        }
+    }
+
     // MARK: - Quick Actions
 
     private var quickActionsRow: some View {
@@ -433,7 +462,7 @@ public struct OptimizeView: View {
                             .font(.system(.body, design: .monospaced))
                             .lineLimit(1)
                         Spacer()
-                        if ProcessHelper.isSafeToTerminate(pid: proc.pid) {
+                        if !ProcessHelper.isSandboxed && ProcessHelper.isSafeToTerminate(pid: proc.pid) {
                             Button {
                                 if settings.confirmBeforeTerminate {
                                     terminateTarget = proc

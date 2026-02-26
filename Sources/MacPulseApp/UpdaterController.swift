@@ -1,12 +1,18 @@
 import SwiftUI
+import StoreKit
 import MacPulseCore
 
 struct CheckForUpdatesView: View {
     let updateChecker: UpdateChecker
+    @Environment(\.requestReview) private var requestReview
 
     var body: some View {
         HStack {
-            if updateChecker.isChecking {
+            if ProcessHelper.isSandboxed {
+                Button("Rate on App Store") {
+                    requestReview()
+                }
+            } else if updateChecker.isChecking {
                 ProgressView()
                     .controlSize(.small)
                 Text("Checking...")

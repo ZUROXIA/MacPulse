@@ -8,7 +8,11 @@ DMG_DIR = $(BUILD_DIR)/dmg
 DMG_FILE = $(BUILD_DIR)/$(APP_NAME).dmg
 VERSION = 1.0.0
 
-.PHONY: build bundle run install test clean icon dmg
+SCHEME = MacPulse
+ARCHIVE_PATH = $(BUILD_DIR)/$(APP_NAME).xcarchive
+EXPORT_DIR = $(BUILD_DIR)/export
+
+.PHONY: build bundle run install test clean icon dmg archive export
 
 build:
 	swift build -c release
@@ -33,8 +37,10 @@ bundle: build icon
 	mkdir -p $(RESOURCES_DIR)
 	cp $(BUILD_DIR)/release/$(APP_NAME) $(MACOS_DIR)/$(APP_NAME)
 	cp Resources/Info.plist $(CONTENTS_DIR)/Info.plist
+	cp Resources/MacPulse.entitlements $(CONTENTS_DIR)/MacPulse.entitlements
+	cp Resources/PrivacyInfo.xcprivacy $(RESOURCES_DIR)/PrivacyInfo.xcprivacy
 	cp $(BUILD_DIR)/AppIcon.icns $(RESOURCES_DIR)/AppIcon.icns
-	codesign --force --sign - $(BUNDLE_DIR)
+	codesign --force --sign - --entitlements Resources/MacPulse.entitlements $(BUNDLE_DIR)
 
 run: bundle
 	open $(BUNDLE_DIR)
@@ -54,6 +60,20 @@ dmg: bundle
 	rm -rf $(DMG_DIR)
 	@echo "DMG created at $(DMG_FILE)"
 
+archive:
+	xcodebuild archive \
+		-scheme $(SCHEME) \
+		-archivePath $(ARCHIVE_PATH) \
+		-destination "generic/platform=macOS"
+	@echo "Archive created at $(ARCHIVE_PATH)"
+
+export: archive
+	xcodebuild -exportArchive \
+		-archivePath $(ARCHIVE_PATH) \
+		-exportPath $(EXPORT_DIR) \
+		-exportOptionsPlist ExportOptions.plist
+	@echo "Exported to $(EXPORT_DIR)"
+
 clean:
 	swift package clean
-	rm -rf $(BUNDLE_DIR) $(BUILD_DIR)/AppIcon.* $(DMG_DIR) $(DMG_FILE)
+	rm -rf $(BUNDLE_DIR) $(BUILD_DIR)/AppIcon.* $(DMG_DIR) $(DMG_FILE) $(ARCHIVE_PATH) $(EXPORT_DIR)

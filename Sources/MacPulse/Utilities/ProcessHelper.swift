@@ -6,6 +6,11 @@ private let logger = Logger(subsystem: "com.macpulse", category: "ProcessHelper"
 
 public enum ProcessHelper {
 
+    /// Whether the app is running inside an App Sandbox container.
+    public static var isSandboxed: Bool {
+        ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] != nil
+    }
+
     /// PIDs that must never be terminated (kernel, launchd).
     private static let protectedPIDs: Set<Int32> = [0, 1]
 
