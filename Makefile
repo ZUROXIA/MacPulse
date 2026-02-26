@@ -37,7 +37,6 @@ bundle: build icon
 	mkdir -p $(RESOURCES_DIR)
 	cp $(BUILD_DIR)/release/$(APP_NAME) $(MACOS_DIR)/$(APP_NAME)
 	cp Resources/Info.plist $(CONTENTS_DIR)/Info.plist
-	cp Resources/MacPulse.entitlements $(CONTENTS_DIR)/MacPulse.entitlements
 	cp Resources/PrivacyInfo.xcprivacy $(RESOURCES_DIR)/PrivacyInfo.xcprivacy
 	cp $(BUILD_DIR)/AppIcon.icns $(RESOURCES_DIR)/AppIcon.icns
 	codesign --force --sign - --entitlements Resources/MacPulse.entitlements $(BUNDLE_DIR)
