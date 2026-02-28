@@ -12,6 +12,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        if UserDefaults.standard.bool(forKey: "fan.forcedActive") {
+            SMCHelper.setFanMode(forced: false)
+            UserDefaults.standard.set(false, forKey: "fan.forcedActive")
+        }
+    }
+
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !flag {
             openDetailWindow?()

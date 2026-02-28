@@ -78,6 +78,20 @@ public final class AppSettings {
         didSet { UserDefaults.standard.set(enableBatteryRule, forKey: "opt.ruleBattery") }
     }
 
+    // MARK: - Fan
+
+    public var fanProfile: String {
+        didSet { UserDefaults.standard.set(fanProfile, forKey: "fan.profile") }
+    }
+
+    public var fanForcedActive: Bool {
+        didSet { UserDefaults.standard.set(fanForcedActive, forKey: "fan.forcedActive") }
+    }
+
+    public var fanThermalAutoSwitch: Bool {
+        didSet { UserDefaults.standard.set(fanThermalAutoSwitch, forKey: "fan.thermalAutoSwitch") }
+    }
+
     public static let intervals: [(String, TimeInterval)] = [
         ("1 second", 1),
         ("2 seconds", 2),
@@ -132,6 +146,12 @@ public final class AppSettings {
             ? defaults.bool(forKey: "opt.ruleThermal") : true
         self.enableBatteryRule = defaults.object(forKey: "opt.ruleBattery") != nil
             ? defaults.bool(forKey: "opt.ruleBattery") : true
+
+        self.fanProfile = defaults.string(forKey: "fan.profile") ?? "Auto"
+
+        self.fanForcedActive = defaults.bool(forKey: "fan.forcedActive")
+        self.fanThermalAutoSwitch = defaults.object(forKey: "fan.thermalAutoSwitch") != nil
+            ? defaults.bool(forKey: "fan.thermalAutoSwitch") : true
     }
 
     private func updateLoginItem() {

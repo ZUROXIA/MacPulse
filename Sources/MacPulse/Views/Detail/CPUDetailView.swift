@@ -2,8 +2,6 @@ import SwiftUI
 
 public struct CPUDetailView: View {
     public let monitor: SystemMonitor
-    @State private var fanOverrides: [Int: Double] = [:]
-    @State private var manualFanMode = false
 
     public init(monitor: SystemMonitor) {
         self.monitor = monitor
@@ -109,82 +107,6 @@ public struct CPUDetailView: View {
                     )
                 }
 
-                // Fan Control
-                let fans = monitor.currentSnapshot.temperature.fans
-                if !fans.isEmpty {
-                    Divider()
-
-                    HStack {
-                        Text("Fan Control")
-                            .font(.headline)
-                        Spacer()
-                        Toggle("Manual", isOn: $manualFanMode)
-                            .toggleStyle(.switch)
-                            .onChange(of: manualFanMode) { _, enabled in
-                                SMCHelper.setFanMode(forced: enabled)
-                                if !enabled {
-                                    fanOverrides.removeAll()
-                                }
-                            }
-                    }
-
-                    if manualFanMode {
-                        Text("Drag sliders to set minimum fan speed. Fans will not spin below the set RPM.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    ForEach(fans) { fan in
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack {
-                                Image(systemName: "fan")
-                                Text("Fan \(fan.index + 1)")
-                                    .fontWeight(.medium)
-                                Spacer()
-                                Text("\(fan.rpm) RPM")
-                                    .monospacedDigit()
-                                    .foregroundStyle(.blue)
-                            }
-
-                            if fan.maxRPM > 0 {
-                                ProgressView(value: Double(fan.rpm), total: Double(fan.maxRPM))
-                                    .tint(fanColor(rpm: fan.rpm, max: fan.maxRPM))
-
-                                HStack {
-                                    Text("\(fan.minRPM)")
-                                        .font(.caption2)
-                                        .foregroundStyle(.secondary)
-                                    Spacer()
-                                    Text("\(fan.maxRPM) RPM max")
-                                        .font(.caption2)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-
-                            if manualFanMode && fan.maxRPM > 0 {
-                                HStack {
-                                    Text("Target:")
-                                        .font(.caption)
-                                    Slider(
-                                        value: Binding(
-                                            get: { fanOverrides[fan.index] ?? Double(fan.minRPM) },
-                                            set: { newValue in
-                                                fanOverrides[fan.index] = newValue
-                                                SMCHelper.setFanMinRPM(index: fan.index, rpm: Int(newValue))
-                                            }
-                                        ),
-                                        in: Double(fan.minRPM)...Double(fan.maxRPM),
-                                        step: 100
-                                    )
-                                    Text("\(Int(fanOverrides[fan.index] ?? Double(fan.minRPM))) RPM")
-                                        .font(.caption.monospacedDigit())
-                                        .frame(width: 70, alignment: .trailing)
-                                }
-                            }
-                        }
-                        .padding(.vertical, 4)
-                    }
-                }
             }
         }
     }
@@ -201,10 +123,4 @@ public struct CPUDetailView: View {
         return .green
     }
 
-    private func fanColor(rpm: Int, max: Int) -> Color {
-        let ratio = Double(rpm) / Double(max)
-        if ratio > 0.8 { return .red }
-        if ratio > 0.5 { return .orange }
-        return .green
-    }
 }

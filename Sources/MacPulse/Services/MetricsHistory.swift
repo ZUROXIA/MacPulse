@@ -21,6 +21,7 @@ public struct MetricsHistory {
     private var _cpuTempHistory: [(Date, Double)] = []
     private var _gpuUtilizationHistory: [(Date, Double)] = []
     private var _memoryPressureHistory: [(Date, Int)] = []
+    private var _fanRPMHistory: [[(Date, Double)]] = []
 
     public init(capacity: Int = 300) {
         self.capacity = capacity
@@ -78,6 +79,15 @@ public struct MetricsHistory {
             guard let util = s.gpu.gpus.first?.utilization else { return nil }
             return (s.timestamp, util)
         }
+
+        // Build per-fan RPM history
+        let maxFanCount = snaps.map { $0.temperature.fans.count }.max() ?? 0
+        _fanRPMHistory = (0..<maxFanCount).map { fanIndex in
+            snaps.compactMap { s in
+                guard fanIndex < s.temperature.fans.count else { return nil }
+                return (s.timestamp, Double(s.temperature.fans[fanIndex].rpm))
+            }
+        }
     }
 
     public var snapshots: [SystemSnapshot] { _orderedSnapshots }
@@ -94,4 +104,5 @@ public struct MetricsHistory {
     public var cpuTempHistory: [(Date, Double)] { _cpuTempHistory }
     public var gpuUtilizationHistory: [(Date, Double)] { _gpuUtilizationHistory }
     public var memoryPressureHistory: [(Date, Int)] { _memoryPressureHistory }
+    public var fanRPMHistory: [[(Date, Double)]] { _fanRPMHistory }
 }

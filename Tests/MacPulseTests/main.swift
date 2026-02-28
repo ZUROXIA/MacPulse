@@ -795,6 +795,209 @@ test("OptimizeThresholds defaults match expected values") {
     assert(d.enableBattery, "Battery rule should be enabled by default")
 }
 
+// MARK: - Fan Profile Tests
+
+print("FanProfile Tests")
+
+test("FanProfile has 5 cases") {
+    assert(FanProfile.allCases.count == 5, "Should have 5 cases, got \(FanProfile.allCases.count)")
+}
+
+test("FanProfile case names are correct") {
+    let names = FanProfile.allCases.map { $0.rawValue }
+    assert(names == ["Auto", "Silent", "Balanced", "Performance", "Custom"],
+           "Cases should be Auto, Silent, Balanced, Performance, Custom — got \(names)")
+}
+
+test("Auto profile returns nil target RPM") {
+    let target = FanProfile.auto.targetRPM(minRPM: 1000, maxRPM: 6000)
+    assert(target == nil, "Auto should return nil, got \(String(describing: target))")
+}
+
+test("Silent profile targets minRPM") {
+    let target = FanProfile.silent.targetRPM(minRPM: 1000, maxRPM: 6000)
+    assert(target == 1000, "Silent should target minRPM 1000, got \(String(describing: target))")
+}
+
+test("Balanced profile targets 40% of range") {
+    let target = FanProfile.balanced.targetRPM(minRPM: 1000, maxRPM: 6000)
+    // 1000 + 0.4 * 5000 = 3000
+    assert(target == 3000, "Balanced should target 3000, got \(String(describing: target))")
+}
+
+test("Performance profile targets 80% of range") {
+    let target = FanProfile.performance.targetRPM(minRPM: 1000, maxRPM: 6000)
+    // 1000 + 0.8 * 5000 = 5000
+    assert(target == 5000, "Performance should target 5000, got \(String(describing: target))")
+}
+
+test("Custom profile returns nil target RPM") {
+    let target = FanProfile.custom.targetRPM(minRPM: 1000, maxRPM: 6000)
+    assert(target == nil, "Custom should return nil, got \(String(describing: target))")
+}
+
+// MARK: - Fan RPM History Tests
+
+print("Fan RPM History Tests")
+
+test("Fan RPM history empty when no fans") {
+    var history = MetricsHistory(capacity: 10)
+    history.append(SystemSnapshot.empty)
+    assert(history.fanRPMHistory.isEmpty, "Should be empty with no fans, got \(history.fanRPMHistory.count)")
+}
+
+test("Fan RPM history tracks single fan") {
+    var history = MetricsHistory(capacity: 10)
+    var s = SystemSnapshot.empty
+    s.temperature = TemperatureMetrics(cpuTemp: nil, gpuTemp: nil, fans: [
+        FanInfo(index: 0, rpm: 2000, minRPM: 1000, maxRPM: 6000)
+    ])
+    history.append(s)
+
+    let fanHistory = history.fanRPMHistory
+    assert(fanHistory.count == 1, "Should have 1 fan history, got \(fanHistory.count)")
+    assert(fanHistory[0].count == 1, "Fan 0 should have 1 entry")
+    assert(fanHistory[0][0].1 == 2000, "Fan 0 RPM should be 2000, got \(fanHistory[0][0].1)")
+}
+
+test("Fan RPM history tracks multiple fans") {
+    var history = MetricsHistory(capacity: 10)
+    var s = SystemSnapshot.empty
+    s.temperature = TemperatureMetrics(cpuTemp: nil, gpuTemp: nil, fans: [
+        FanInfo(index: 0, rpm: 2000, minRPM: 1000, maxRPM: 6000),
+        FanInfo(index: 1, rpm: 3000, minRPM: 1000, maxRPM: 6000),
+    ])
+    history.append(s)
+
+    let fanHistory = history.fanRPMHistory
+    assert(fanHistory.count == 2, "Should have 2 fan histories, got \(fanHistory.count)")
+    assert(fanHistory[0][0].1 == 2000, "Fan 0 RPM should be 2000")
+    assert(fanHistory[1][0].1 == 3000, "Fan 1 RPM should be 3000")
+}
+
+test("Fan RPM history accumulates over time") {
+    var history = MetricsHistory(capacity: 10)
+    for rpm in [1500, 2000, 2500] {
+        var s = SystemSnapshot.empty
+        s.temperature = TemperatureMetrics(cpuTemp: nil, gpuTemp: nil, fans: [
+            FanInfo(index: 0, rpm: rpm, minRPM: 1000, maxRPM: 6000)
+        ])
+        history.append(s)
+    }
+
+    let fanHistory = history.fanRPMHistory
+    assert(fanHistory.count == 1, "Should have 1 fan history")
+    assert(fanHistory[0].count == 3, "Fan 0 should have 3 entries, got \(fanHistory[0].count)")
+    assert(fanHistory[0][2].1 == 2500, "Last RPM should be 2500")
+}
+
+// MARK: - Fan Profile Noise & Color Tests
+
+print("Fan Profile Noise & Color Tests")
+
+test("Auto profile noise estimate is System managed") {
+    assert(FanProfile.auto.noiseEstimate == "System managed",
+           "Expected 'System managed', got '\(FanProfile.auto.noiseEstimate)'")
+}
+
+test("Silent profile noise estimate is Quiet") {
+    assert(FanProfile.silent.noiseEstimate == "Quiet",
+           "Expected 'Quiet', got '\(FanProfile.silent.noiseEstimate)'")
+}
+
+test("Balanced profile noise estimate is Moderate") {
+    assert(FanProfile.balanced.noiseEstimate == "Moderate",
+           "Expected 'Moderate', got '\(FanProfile.balanced.noiseEstimate)'")
+}
+
+test("Performance profile noise estimate is Loud") {
+    assert(FanProfile.performance.noiseEstimate == "Loud",
+           "Expected 'Loud', got '\(FanProfile.performance.noiseEstimate)'")
+}
+
+test("Custom profile noise estimate is Varies") {
+    assert(FanProfile.custom.noiseEstimate == "Varies",
+           "Expected 'Varies', got '\(FanProfile.custom.noiseEstimate)'")
+}
+
+// MARK: - Fan Profile Edge Cases
+
+print("Fan Profile Edge Cases")
+
+test("targetRPM with minRPM == maxRPM returns minRPM") {
+    let silentRPM = FanProfile.silent.targetRPM(minRPM: 3000, maxRPM: 3000)
+    assert(silentRPM == 3000, "Silent with equal min/max should be 3000, got \(silentRPM.map(String.init) ?? "nil")")
+
+    let balancedRPM = FanProfile.balanced.targetRPM(minRPM: 3000, maxRPM: 3000)
+    assert(balancedRPM == 3000, "Balanced with equal min/max should be 3000, got \(balancedRPM.map(String.init) ?? "nil")")
+
+    let perfRPM = FanProfile.performance.targetRPM(minRPM: 3000, maxRPM: 3000)
+    assert(perfRPM == 3000, "Performance with equal min/max should be 3000, got \(perfRPM.map(String.init) ?? "nil")")
+}
+
+test("Profile round-trip via rawValue") {
+    for profile in FanProfile.allCases {
+        let raw = profile.rawValue
+        let restored = FanProfile(rawValue: raw)
+        assert(restored == profile, "Round-trip failed for \(profile): got \(restored.map(\.rawValue) ?? "nil")")
+    }
+}
+
+test("Auto and custom targetRPM returns nil") {
+    assert(FanProfile.auto.targetRPM(minRPM: 1000, maxRPM: 6000) == nil, "Auto should return nil")
+    assert(FanProfile.custom.targetRPM(minRPM: 1000, maxRPM: 6000) == nil, "Custom should return nil")
+}
+
+test("targetRPM values are within range") {
+    let min = 1000
+    let max = 6000
+    for profile in [FanProfile.silent, .balanced, .performance] {
+        if let rpm = profile.targetRPM(minRPM: min, maxRPM: max) {
+            assert(rpm >= min, "\(profile.rawValue) RPM \(rpm) should be >= \(min)")
+            assert(rpm <= max, "\(profile.rawValue) RPM \(rpm) should be <= \(max)")
+        }
+    }
+}
+
+// MARK: - Thermal Auto-Switch Tests
+
+print("Thermal Auto-Switch Tests")
+
+test("shouldAutoSwitchToPerformance returns true for serious + auto") {
+    let result = FanProfile.shouldAutoSwitchToPerformance(
+        thermalLevel: .serious, currentProfile: .auto, alreadyOverridden: false
+    )
+    assert(result == true, "Should auto-switch for serious + auto")
+}
+
+test("shouldAutoSwitchToPerformance returns true for critical + balanced") {
+    let result = FanProfile.shouldAutoSwitchToPerformance(
+        thermalLevel: .critical, currentProfile: .balanced, alreadyOverridden: false
+    )
+    assert(result == true, "Should auto-switch for critical + balanced")
+}
+
+test("shouldAutoSwitchToPerformance returns false for already performance") {
+    let result = FanProfile.shouldAutoSwitchToPerformance(
+        thermalLevel: .serious, currentProfile: .performance, alreadyOverridden: false
+    )
+    assert(result == false, "Should not switch when already on performance")
+}
+
+test("shouldAutoSwitchToPerformance returns false when already overridden") {
+    let result = FanProfile.shouldAutoSwitchToPerformance(
+        thermalLevel: .serious, currentProfile: .auto, alreadyOverridden: true
+    )
+    assert(result == false, "Should not switch when already overridden")
+}
+
+test("shouldAutoSwitchToPerformance returns false for nominal") {
+    let result = FanProfile.shouldAutoSwitchToPerformance(
+        thermalLevel: .nominal, currentProfile: .auto, alreadyOverridden: false
+    )
+    assert(result == false, "Should not switch for nominal thermal level")
+}
+
 // MARK: - Summary
 
 print("")

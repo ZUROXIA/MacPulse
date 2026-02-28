@@ -96,7 +96,41 @@ public struct ThermalDetailView: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Thermal state history chart")
                 .accessibilityValue("Current level: \(thermal.level.rawValue)")
+
+                // Fan summary
+                let fans = monitor.currentSnapshot.temperature.fans
+                if !fans.isEmpty {
+                    Divider()
+
+                    Text("Fans")
+                        .font(.headline)
+
+                    ForEach(fans) { fan in
+                        HStack(spacing: 8) {
+                            Image(systemName: "fan")
+                                .foregroundStyle(.secondary)
+                            Text("Fan \(fan.index + 1)")
+                                .fontWeight(.medium)
+                            Spacer()
+                            Text("\(fan.rpm) RPM")
+                                .monospacedDigit()
+                                .foregroundStyle(.blue)
+                        }
+
+                        if fan.maxRPM > 0 {
+                            ProgressView(value: Double(fan.rpm), total: Double(fan.maxRPM))
+                                .tint(fanColor(rpm: fan.rpm, max: fan.maxRPM))
+                        }
+                    }
+                }
             }
         }
+    }
+
+    private func fanColor(rpm: Int, max: Int) -> Color {
+        let ratio = Double(rpm) / Double(max)
+        if ratio > 0.8 { return .red }
+        if ratio > 0.5 { return .orange }
+        return .green
     }
 }

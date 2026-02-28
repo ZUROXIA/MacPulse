@@ -26,6 +26,9 @@ public final class SystemMonitor {
     private var interval: TimeInterval = 2.0
     private var isRunning = false
 
+    private var preThermalProfile: FanProfile?
+    private var thermalOverrideActive = false
+
     public var isReady: Bool { history.count > 0 }
 
     public init() {}
@@ -46,6 +49,7 @@ public final class SystemMonitor {
         }
 
         sample()
+        restoreFanProfile()
         scheduleTimer()
     }
 
@@ -87,6 +91,7 @@ public final class SystemMonitor {
         currentSnapshot = snapshot
         history.append(snapshot)
         alertManager.evaluate(snapshot: snapshot)
+        evaluateThermalFanSwitch(thermalLevel: snapshot.thermal.level)
 
         // Persist to SQLite on background queue
         let store = self.store
@@ -105,6 +110,87 @@ public final class SystemMonitor {
         if pruneCounter >= 100 {
             pruneCounter = 0
             Task.detached { store.prune() }
+        }
+    }
+
+    private func restoreFanProfile() {
+        let defaults = UserDefaults.standard
+        let forcedActive = defaults.bool(forKey: "fan.forcedActive")
+        let profileRaw = defaults.string(forKey: "fan.profile") ?? "Auto"
+        let profile = FanProfile(rawValue: profileRaw) ?? .auto
+
+        if forcedActive && profile == .auto {
+            // Crash recovery: forcedActive but profile is auto — reset
+            _ = SMCHelper.setFanMode(forced: false)
+            defaults.set(false, forKey: "fan.forcedActive")
+            return
+        }
+
+        guard profile != .auto && profile != .custom else { return }
+
+        _ = SMCHelper.setFanMode(forced: true)
+        for fan in temperatureCollector.collect().fans where fan.maxRPM > 0 {
+            if let target = profile.targetRPM(minRPM: fan.minRPM, maxRPM: fan.maxRPM) {
+                _ = SMCHelper.setFanMinRPM(index: fan.index, rpm: target)
+            }
+        }
+    }
+
+    private func evaluateThermalFanSwitch(thermalLevel: ThermalLevel) {
+        let defaults = UserDefaults.standard
+        let autoSwitchEnabled = defaults.object(forKey: "fan.thermalAutoSwitch") != nil
+            ? defaults.bool(forKey: "fan.thermalAutoSwitch") : true
+        guard autoSwitchEnabled else { return }
+
+        let profileRaw = defaults.string(forKey: "fan.profile") ?? "Auto"
+        let currentProfile = FanProfile(rawValue: profileRaw) ?? .auto
+
+        if FanProfile.shouldAutoSwitchToPerformance(
+            thermalLevel: thermalLevel,
+            currentProfile: currentProfile,
+            alreadyOverridden: thermalOverrideActive
+        ) {
+            preThermalProfile = currentProfile
+            thermalOverrideActive = true
+
+            defaults.set(FanProfile.performance.rawValue, forKey: "fan.profile")
+            defaults.set(true, forKey: "fan.forcedActive")
+
+            _ = SMCHelper.setFanMode(forced: true)
+            for fan in temperatureCollector.collect().fans where fan.maxRPM > 0 {
+                if let target = FanProfile.performance.targetRPM(minRPM: fan.minRPM, maxRPM: fan.maxRPM) {
+                    _ = SMCHelper.setFanMinRPM(index: fan.index, rpm: target)
+                }
+            }
+
+            alertManager.sendFanNotification(
+                title: "Fan Speed Increased",
+                body: "Thermal pressure detected — switched to Performance profile."
+            )
+        } else if thermalOverrideActive &&
+                    (thermalLevel == .nominal || thermalLevel == .fair) {
+            let restoreProfile = preThermalProfile ?? .auto
+            defaults.set(restoreProfile.rawValue, forKey: "fan.profile")
+
+            if restoreProfile == .auto {
+                _ = SMCHelper.setFanMode(forced: false)
+                defaults.set(false, forKey: "fan.forcedActive")
+            } else {
+                _ = SMCHelper.setFanMode(forced: true)
+                for fan in temperatureCollector.collect().fans where fan.maxRPM > 0 {
+                    if let target = restoreProfile.targetRPM(minRPM: fan.minRPM, maxRPM: fan.maxRPM) {
+                        _ = SMCHelper.setFanMinRPM(index: fan.index, rpm: target)
+                    }
+                }
+            }
+
+            thermalOverrideActive = false
+            preThermalProfile = nil
+
+            alertManager.sendFanNotification(
+                title: "Fan Speed Restored",
+                body: "Thermal pressure resolved — reverted to \(restoreProfile.rawValue) profile."
+            )
         }
     }
 }

@@ -33,6 +33,8 @@ public struct DetailWindow: View {
                     NetworkDetailView(monitor: monitor)
                 case .thermal:
                     ThermalDetailView(monitor: monitor)
+                case .fans:
+                    FanControlView(monitor: monitor)
                 case .processes:
                     ProcessListView(monitor: monitor)
                 case .optimize:

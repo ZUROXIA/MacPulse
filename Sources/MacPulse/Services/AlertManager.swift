@@ -40,6 +40,10 @@ public final class AlertManager {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 
+    public func sendFanNotification(title: String, body: String) {
+        sendNotification(title: title, body: body)
+    }
+
     public func evaluate(snapshot: SystemSnapshot) {
         if cpuAlertEnabled {
             evaluateCPU(snapshot.cpu.totalUsage)
