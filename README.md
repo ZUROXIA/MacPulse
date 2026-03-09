@@ -53,51 +53,6 @@ cd MacPulse
 make run
 ```
 
-### Build Commands
-
-```bash
-make build     # Compile release binary
-make bundle    # Create .app bundle with icon and entitlements
-make run       # Build, bundle, and launch
-make install   # Copy to /Applications
-make dmg       # Create distributable DMG
-make test      # Run test suite (205 assertions)
-make archive   # Xcode archive for App Store submission
-make export    # Export archive for App Store Connect upload
-make clean     # Remove build artifacts
-```
-
-## Architecture
-
-```
-Sources/
-  MacPulse/             # Core library (MacPulseCore)
-    App/                # AppState
-    Collectors/         # CPU, Memory, Disk, Network, Battery, GPU,
-                        # Temperature, Thermal, DiskIO, Process
-    Models/             # Metric structs (all Sendable)
-    Services/           # SystemMonitor, MetricsHistory, MetricsStore,
-                        # AlertManager, CSVExporter, UpdateChecker,
-                        # AppSettings
-    Utilities/          # SMCHelper, MachHelpers
-    Views/
-      MenuBar/          # Popover and quick stats
-      Detail/           # Full detail window (CPU, Memory, Disk, etc.)
-      Shared/           # GaugeView, LiveChart, DualLineChart,
-                        # SparklineView, MenuBarGraphView
-  MacPulseApp/          # @main entry point, Settings scene
-  MacPulseWidget/       # WidgetKit extension (requires Xcode)
-Tests/
-  MacPulseTests/        # 205 assertions across all collectors
-```
-
-**Key design decisions:**
-- `@Observable` (macOS 14 Observation framework) for reactive UI
-- `@MainActor` isolation on SystemMonitor for thread safety
-- Ring buffer with pre-computed ordered snapshots for O(1) reads
-- Direct IOKit/Mach/proc APIs — no shelling out to system commands
-- SQLite3 (system library) for persistence — no SPM dependencies
-
 ## Configuration
 
 Open Settings (`Cmd+,`) to configure:
@@ -113,29 +68,15 @@ Open Settings (`Cmd+,`) to configure:
 | Disk alert | On | Notify when any volume >95% full |
 | Launch at login | Off | Start MacPulse on system boot |
 
-## App Store vs DMG
-
-The App Store version runs inside an App Sandbox. Some features that require elevated privileges are gracefully limited:
-
-| Feature | DMG | App Store |
-|---------|-----|-----------|
-| CPU / Memory / Disk / Network monitoring | Yes | Yes |
-| Battery / Thermal / GPU stats | Yes | Yes |
-| Process list (top by CPU/memory) | Yes | Limited |
-| Terminate processes | Yes | No |
-| Purge memory | Yes | No |
-| Flush DNS cache | Yes | No |
-| Clear user caches | Yes | No |
-| Temperature / fan via SMC | Yes | No |
-| Update checking | GitHub Releases | App Store |
-
-The App Store build shows an informational message where unavailable features would appear, and hides terminate buttons.
-
 ## Requirements
 
 - macOS 14.0 Sonoma or later
 - Apple Silicon or Intel Mac
 
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, architecture details, and guidelines.
+
 ## License
 
-MIT
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
