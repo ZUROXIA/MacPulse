@@ -19,7 +19,7 @@ public struct ProcessListView: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                // Header
+                // Header card
                 HStack(spacing: 30) {
                     GaugeView(
                         title: sortByMemory ? "Memory" : "CPU",
@@ -40,6 +40,8 @@ public struct ProcessListView: View {
 
                     Spacer()
                 }
+                .padding()
+                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
 
                 Picker("Sort by", selection: $sortByMemory) {
                     Text("CPU Usage").tag(false)
@@ -47,8 +49,6 @@ public struct ProcessListView: View {
                 }
                 .pickerStyle(.segmented)
                 .frame(width: 250)
-
-                Divider()
 
                 let processes = sortByMemory
                     ? monitor.currentSnapshot.processes.topByMemory
@@ -60,14 +60,17 @@ public struct ProcessListView: View {
                         systemImage: "lock.shield",
                         description: Text("Process enumeration is not available in the App Store version. CPU and memory monitoring remain fully functional.")
                     )
+                    .padding()
+                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
                 } else if processes.isEmpty {
                     ContentUnavailableView(
                         "No Process Data",
                         systemImage: "list.number",
                         description: Text("Waiting for process data...")
                     )
+                    .padding()
+                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
                 } else {
-                    // Column headers
                     Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
                         GridRow {
                             Text("PID")
@@ -124,12 +127,15 @@ public struct ProcessListView: View {
                             .font(.system(.body, design: .monospaced))
                         }
                     }
-
-                    Divider()
+                    .padding()
+                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
 
                     // Usage chart
-                    Text("\(sortByMemory ? "Memory" : "CPU") Usage Over Time")
-                        .font(.headline)
+                    SectionHeader(
+                        "\(sortByMemory ? "Memory" : "CPU") Usage Over Time",
+                        icon: "chart.xyaxis.line",
+                        color: sortByMemory ? .orange : .blue
+                    )
 
                     LiveChart(
                         data: sortByMemory
@@ -140,6 +146,8 @@ public struct ProcessListView: View {
                         yDomain: 0...1.0,
                         formatAsPercent: true
                     )
+                    .padding()
+                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
                 }
             }
         }

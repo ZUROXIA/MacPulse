@@ -13,6 +13,7 @@ public struct MemoryDetailView: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                // Header card
                 HStack(spacing: 30) {
                     GaugeView(
                         title: "Memory",
@@ -29,7 +30,6 @@ public struct MemoryDetailView: View {
 
                     Spacer()
 
-                    // Pressure indicator
                     VStack(spacing: 4) {
                         Image(systemName: pressureIcon)
                             .font(.title)
@@ -39,11 +39,10 @@ public struct MemoryDetailView: View {
                             .foregroundStyle(pressureColor)
                     }
                 }
+                .padding()
+                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
 
-                Divider()
-
-                Text("Breakdown")
-                    .font(.headline)
+                SectionHeader("Breakdown", icon: "chart.pie", color: .orange)
 
                 Grid(alignment: .leading, horizontalSpacing: 20, verticalSpacing: 8) {
                     memoryRow("Active", value: mem.active, color: .orange)
@@ -51,11 +50,10 @@ public struct MemoryDetailView: View {
                     memoryRow("Compressed", value: mem.compressed, color: .purple)
                     memoryRow("Free", value: mem.free, color: .green)
                 }
+                .padding()
+                .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
 
-                Divider()
-
-                Text("Memory Usage Over Time")
-                    .font(.headline)
+                SectionHeader("Memory Usage Over Time", icon: "chart.xyaxis.line", color: .orange)
 
                 LiveChart(
                     data: monitor.history.memoryHistory,
@@ -64,11 +62,10 @@ public struct MemoryDetailView: View {
                     yDomain: 0...1.0,
                     formatAsPercent: true
                 )
+                .padding()
+                .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
 
-                Divider()
-
-                Text("Memory Pressure Over Time")
-                    .font(.headline)
+                SectionHeader("Memory Pressure Over Time", icon: "gauge.with.dots.needle.50percent", color: .orange)
 
                 let pressureData = monitor.history.memoryPressureHistory
                 Chart {
@@ -105,6 +102,8 @@ public struct MemoryDetailView: View {
                     }
                 }
                 .frame(height: 150)
+                .padding()
+                .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Memory pressure history chart")
                 .accessibilityValue("Current: \(mem.pressureLevel.label)")

@@ -13,10 +13,27 @@ public struct MenuBarView: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("MacPulse")
-                .font(.headline)
-                .padding(.bottom, 4)
+        VStack(alignment: .leading, spacing: 0) {
+            // Title bar
+            HStack {
+                Image(systemName: "gauge.medium")
+                    .foregroundStyle(.blue)
+                Text("MacPulse")
+                    .font(.headline)
+                Spacer()
+                if monitor.isReady {
+                    Text(monitor.currentSnapshot.thermal.level.rawValue)
+                        .font(.caption2.weight(.medium))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(
+                            monitor.currentSnapshot.thermal.level.color.opacity(0.15),
+                            in: Capsule()
+                        )
+                        .foregroundStyle(monitor.currentSnapshot.thermal.level.color)
+                }
+            }
+            .padding(.bottom, 8)
 
             if !monitor.isReady {
                 HStack {
@@ -29,70 +46,109 @@ public struct MenuBarView: View {
                 .padding(.vertical, 8)
             }
 
-            QuickStatRow(
-                icon: "cpu",
-                label: "CPU",
-                value: FormatHelpers.percent(monitor.currentSnapshot.cpu.totalUsage),
-                color: .blue,
-                sparklineData: recentValues(from: monitor.history.cpuHistory)
-            )
+            Divider()
+                .padding(.vertical, 4)
 
-            QuickStatRow(
-                icon: "memorychip",
-                label: "Memory",
-                value: FormatHelpers.percent(monitor.currentSnapshot.memory.usedFraction),
-                color: .orange,
-                sparklineData: recentValues(from: monitor.history.memoryHistory)
-            )
-
-            QuickStatRow(
-                icon: "arrow.up.arrow.down",
-                label: "Network",
-                value: "\u{2191}\(FormatHelpers.bytesPerSecond(monitor.currentSnapshot.network.totalSendRate))  \u{2193}\(FormatHelpers.bytesPerSecond(monitor.currentSnapshot.network.totalReceiveRate))",
-                color: .green
-            )
-
-            if monitor.currentSnapshot.battery.isPresent {
+            // Stats
+            VStack(spacing: 6) {
                 QuickStatRow(
-                    icon: monitor.currentSnapshot.battery.isCharging ? "battery.100.bolt" : "battery.75",
-                    label: "Battery",
-                    value: FormatHelpers.percentInt(monitor.currentSnapshot.battery.chargePercent),
-                    color: .yellow,
-                    sparklineData: recentValues(from: monitor.history.batteryHistory)
+                    icon: "cpu",
+                    label: "CPU",
+                    value: FormatHelpers.percent(monitor.currentSnapshot.cpu.totalUsage),
+                    color: .blue,
+                    sparklineData: recentValues(from: monitor.history.cpuHistory)
                 )
-            }
 
-            QuickStatRow(
-                icon: "thermometer.medium",
-                label: "Thermal",
-                value: monitor.currentSnapshot.thermal.level.rawValue,
-                color: monitor.currentSnapshot.thermal.level.color
-            )
+                QuickStatRow(
+                    icon: "memorychip",
+                    label: "Memory",
+                    value: FormatHelpers.percent(monitor.currentSnapshot.memory.usedFraction),
+                    color: .orange,
+                    sparklineData: recentValues(from: monitor.history.memoryHistory)
+                )
+
+                QuickStatRow(
+                    icon: "arrow.up.arrow.down",
+                    label: "Network",
+                    value: "\u{2191}\(FormatHelpers.bytesPerSecond(monitor.currentSnapshot.network.totalSendRate))  \u{2193}\(FormatHelpers.bytesPerSecond(monitor.currentSnapshot.network.totalReceiveRate))",
+                    color: .teal
+                )
+
+                if monitor.currentSnapshot.battery.isPresent {
+                    QuickStatRow(
+                        icon: monitor.currentSnapshot.battery.isCharging ? "battery.100.bolt" : "battery.75",
+                        label: "Battery",
+                        value: FormatHelpers.percentInt(monitor.currentSnapshot.battery.chargePercent),
+                        color: .green,
+                        sparklineData: recentValues(from: monitor.history.batteryHistory)
+                    )
+                }
+            }
 
             Divider()
+                .padding(.vertical, 4)
 
-            Button("Open MacPulse Window") {
-                dismiss()
-                NSApp.activate(ignoringOtherApps: true)
-                openWindow(id: "detail")
+            // Actions
+            VStack(spacing: 2) {
+                Button {
+                    dismiss()
+                    NSApp.activate(ignoringOtherApps: true)
+                    openWindow(id: "detail")
+                } label: {
+                    HStack {
+                        Image(systemName: "macwindow")
+                            .frame(width: 16)
+                        Text("Open MacPulse")
+                        Spacer()
+                        Text("\u{2318}D")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                .keyboardShortcut("d")
+                .buttonStyle(.plain)
+                .padding(.vertical, 4)
+
+                Button {
+                    dismiss()
+                    NSApp.activate(ignoringOtherApps: true)
+                    appState.selectedTab = .settings
+                    openWindow(id: "detail")
+                } label: {
+                    HStack {
+                        Image(systemName: "gearshape")
+                            .frame(width: 16)
+                        Text("Settings")
+                        Spacer()
+                        Text("\u{2318},")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                .keyboardShortcut(",")
+                .buttonStyle(.plain)
+                .padding(.vertical, 4)
+
+                Divider()
+                    .padding(.vertical, 2)
+
+                Button {
+                    NSApplication.shared.terminate(nil)
+                } label: {
+                    HStack {
+                        Image(systemName: "power")
+                            .frame(width: 16)
+                        Text("Quit MacPulse")
+                        Spacer()
+                        Text("\u{2318}Q")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                .keyboardShortcut("q")
+                .buttonStyle(.plain)
+                .padding(.vertical, 4)
             }
-            .keyboardShortcut("d")
-
-            Button("Settings...") {
-                dismiss()
-                NSApp.activate(ignoringOtherApps: true)
-                // Open detail window on Settings tab
-                appState.selectedTab = .settings
-                openWindow(id: "detail")
-            }
-            .keyboardShortcut(",")
-
-            Divider()
-
-            Button("Quit MacPulse") {
-                NSApplication.shared.terminate(nil)
-            }
-            .keyboardShortcut("q")
         }
         .padding(12)
         .frame(width: 300)
@@ -101,7 +157,6 @@ public struct MenuBarView: View {
         }
     }
 
-    /// Extract the last 30 values from a history array for the sparkline.
     private func recentValues(from history: [(Date, Double)]) -> [Double] {
         Array(history.suffix(30).map(\.1))
     }

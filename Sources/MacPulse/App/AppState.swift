@@ -37,5 +37,41 @@ public final class AppState {
             case .settings: "gearshape"
             }
         }
+
+        public var color: Color {
+            switch self {
+            case .cpu: .blue
+            case .gpu: .purple
+            case .memory: .orange
+            case .disk: .indigo
+            case .battery: .green
+            case .network: .teal
+            case .thermal: .red
+            case .fans: .cyan
+            case .processes: .pink
+            case .optimize: .mint
+            case .settings: .gray
+            }
+        }
+
+        public enum Section: String, CaseIterable {
+            case hardware = "Hardware"
+            case system = "System"
+            case tools = "Tools"
+        }
+
+        public var section: Section {
+            switch self {
+            case .cpu, .gpu, .memory, .disk, .battery: .hardware
+            case .network, .thermal, .fans, .processes: .system
+            case .optimize, .settings: .tools
+            }
+        }
+
+        public static var grouped: [(Section, [DetailTab])] {
+            Section.allCases.map { section in
+                (section, allCases.filter { $0.section == section })
+            }
+        }
     }
 }

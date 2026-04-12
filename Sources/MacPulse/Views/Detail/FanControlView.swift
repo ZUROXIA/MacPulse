@@ -27,7 +27,7 @@ public struct FanControlView: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                // Header
+                // Header card
                 HStack(spacing: 30) {
                     GaugeView(
                         title: "Avg Fan",
@@ -43,12 +43,15 @@ public struct FanControlView: View {
                         if let avgRPM = averageRPM {
                             Text("\(avgRPM) RPM avg")
                                 .font(.title.monospacedDigit())
-                                .foregroundStyle(.blue)
+                                .foregroundStyle(.cyan)
+                                .contentTransition(.numericText())
                         }
                     }
 
                     Spacer()
                 }
+                .padding()
+                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
 
                 // Sandbox banner
                 if ProcessHelper.isSandboxed {
@@ -64,38 +67,35 @@ public struct FanControlView: View {
                     .accessibilityLabel("Fan control limited by sandbox")
                 }
 
-                Divider()
-
                 // Profile picker
-                Text("Speed Profile")
-                    .font(.headline)
+                SectionHeader("Speed Profile", icon: "slider.horizontal.3", color: .cyan)
 
                 HStack(spacing: 6) {
                     ForEach(FanProfile.allCases) { profile in
                         Button {
                             handleProfileSelection(profile)
                         } label: {
-                            HStack(spacing: 4) {
+                            HStack(spacing: 5) {
                                 Circle()
                                     .fill(profile.color)
-                                    .frame(width: 6, height: 6)
+                                    .frame(width: 7, height: 7)
                                 Text(profile.rawValue)
-                                    .font(.caption)
+                                    .font(.caption.weight(.medium))
                             }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 7)
                             .background(
                                 selectedProfile == profile
-                                    ? profile.color.opacity(0.2)
+                                    ? profile.color.opacity(0.15)
                                     : Color.clear,
-                                in: RoundedRectangle(cornerRadius: 6)
+                                in: RoundedRectangle(cornerRadius: 8)
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 6)
+                                RoundedRectangle(cornerRadius: 8)
                                     .stroke(
                                         selectedProfile == profile
                                             ? profile.color
-                                            : Color.secondary.opacity(0.3),
+                                            : Color.secondary.opacity(0.2),
                                         lineWidth: selectedProfile == profile ? 1.5 : 0.5
                                     )
                             )
@@ -105,13 +105,18 @@ public struct FanControlView: View {
                 }
                 .accessibilityHint("Select a fan speed profile")
 
-                Text(selectedProfile.noiseEstimate)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 4) {
+                    Image(systemName: "speaker.wave.2")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                    Text(selectedProfile.noiseEstimate)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
 
                 // Per-fan cards
                 if !fans.isEmpty {
-                    Divider()
+                    SectionHeader("Active Fans", icon: "fan", color: .cyan)
 
                     ForEach(fans) { fan in
                         fanCard(fan)
@@ -121,36 +126,37 @@ public struct FanControlView: View {
                 // RPM history chart
                 let rpmHistory = monitor.history.fanRPMHistory
                 if !rpmHistory.isEmpty {
-                    Divider()
+                    SectionHeader("RPM Over Time", icon: "chart.xyaxis.line", color: .cyan)
 
-                    Text("RPM Over Time")
-                        .font(.headline)
+                    Group {
+                        if rpmHistory.count == 2,
+                           !rpmHistory[0].isEmpty, !rpmHistory[1].isEmpty {
+                            DualLineChart(
+                                data1: rpmHistory[0],
+                                data2: rpmHistory[1],
+                                color1: fanChartColor(index: 0),
+                                color2: fanChartColor(index: 1),
+                                label1: "Fan 1 RPM",
+                                label2: "Fan 2 RPM"
+                            )
+                        } else {
+                            ForEach(Array(rpmHistory.enumerated()), id: \.offset) { index, history in
+                                if !history.isEmpty {
+                                    Text("Fan \(index + 1)")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
 
-                    if rpmHistory.count == 2,
-                       !rpmHistory[0].isEmpty, !rpmHistory[1].isEmpty {
-                        DualLineChart(
-                            data1: rpmHistory[0],
-                            data2: rpmHistory[1],
-                            color1: fanChartColor(index: 0),
-                            color2: fanChartColor(index: 1),
-                            label1: "Fan 1 RPM",
-                            label2: "Fan 2 RPM"
-                        )
-                    } else {
-                        ForEach(Array(rpmHistory.enumerated()), id: \.offset) { index, history in
-                            if !history.isEmpty {
-                                Text("Fan \(index + 1)")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-
-                                LiveChart(
-                                    data: history,
-                                    color: fanChartColor(index: index),
-                                    label: "Fan \(index + 1) RPM"
-                                )
+                                    LiveChart(
+                                        data: history,
+                                        color: fanChartColor(index: index),
+                                        label: "Fan \(index + 1) RPM"
+                                    )
+                                }
                             }
                         }
                     }
+                    .padding()
+                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
                 }
             }
         }
@@ -200,6 +206,7 @@ public struct FanControlView: View {
                 TimelineView(.animation) { timeline in
                     Image(systemName: "fan")
                         .font(.title3)
+                        .foregroundStyle(.cyan)
                         .rotationEffect(.degrees(
                             timeline.date.timeIntervalSinceReferenceDate * rotationSpeed(rpm: fan.rpm)
                         ))
@@ -210,6 +217,7 @@ public struct FanControlView: View {
                 Text("\(fan.rpm)")
                     .font(.title2.monospacedDigit())
                     .foregroundStyle(.blue)
+                    .contentTransition(.numericText())
                 Text("RPM")
                     .font(.caption)
                     .foregroundStyle(.secondary)

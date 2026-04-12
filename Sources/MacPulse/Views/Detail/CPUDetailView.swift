@@ -10,6 +10,7 @@ public struct CPUDetailView: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                // Header card
                 HStack(spacing: 30) {
                     GaugeView(
                         title: "Total CPU",
@@ -25,17 +26,17 @@ public struct CPUDetailView: View {
                         Text(FormatHelpers.percent(monitor.currentSnapshot.cpu.totalUsage))
                             .font(.title.monospacedDigit())
                             .foregroundStyle(.blue)
+                            .contentTransition(.numericText())
                     }
 
                     Spacer()
 
-                    // Temperature & Fan info
                     VStack(alignment: .trailing, spacing: 8) {
                         if let cpuTemp = monitor.currentSnapshot.temperature.cpuTemp {
                             HStack(spacing: 4) {
                                 Image(systemName: "thermometer")
                                     .foregroundStyle(tempColor(cpuTemp))
-                                Text(String(format: "%.0f°C", cpuTemp))
+                                Text(String(format: "%.0f\u{00B0}C", cpuTemp))
                                     .font(.title2.monospacedDigit())
                                     .foregroundStyle(tempColor(cpuTemp))
                             }
@@ -45,7 +46,7 @@ public struct CPUDetailView: View {
                                 Text("GPU")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
-                                Text(String(format: "%.0f°C", gpuTemp))
+                                Text(String(format: "%.0f\u{00B0}C", gpuTemp))
                                     .font(.body.monospacedDigit())
                                     .foregroundStyle(tempColor(gpuTemp))
                             }
@@ -61,11 +62,11 @@ public struct CPUDetailView: View {
                         }
                     }
                 }
+                .padding()
+                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
 
-                Divider()
-
-                Text("Per-Core Usage")
-                    .font(.headline)
+                // Per-Core Usage
+                SectionHeader("Per-Core Usage", icon: "cpu", color: .blue)
 
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
                     ForEach(Array(monitor.currentSnapshot.cpu.perCoreUsage.enumerated()), id: \.offset) { index, usage in
@@ -78,13 +79,13 @@ public struct CPUDetailView: View {
                             Text(FormatHelpers.percentInt(usage))
                                 .font(.caption.monospacedDigit())
                         }
+                        .padding(8)
+                        .background(.quaternary.opacity(0.2), in: RoundedRectangle(cornerRadius: 8))
                     }
                 }
 
-                Divider()
-
-                Text("CPU Usage Over Time")
-                    .font(.headline)
+                // CPU Usage Over Time
+                SectionHeader("CPU Usage Over Time", icon: "chart.xyaxis.line", color: .blue)
 
                 LiveChart(
                     data: monitor.history.cpuHistory,
@@ -93,18 +94,19 @@ public struct CPUDetailView: View {
                     yDomain: 0...1.0,
                     formatAsPercent: true
                 )
+                .padding()
+                .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
 
                 if !monitor.history.cpuTempHistory.isEmpty {
-                    Divider()
-
-                    Text("CPU Temperature Over Time")
-                        .font(.headline)
+                    SectionHeader("CPU Temperature Over Time", icon: "thermometer", color: .red)
 
                     LiveChart(
                         data: monitor.history.cpuTempHistory,
                         color: .red,
-                        label: "Temperature (°C)"
+                        label: "Temperature (\u{00B0}C)"
                     )
+                    .padding()
+                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
                 }
 
             }

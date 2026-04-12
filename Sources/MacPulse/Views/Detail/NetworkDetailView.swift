@@ -21,6 +21,7 @@ public struct NetworkDetailView: View {
                             .foregroundStyle(.blue)
                         Text(FormatHelpers.bytesPerSecond(net.totalSendRate))
                             .font(.title2.monospacedDigit())
+                            .contentTransition(.numericText())
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -28,15 +29,15 @@ public struct NetworkDetailView: View {
                             .foregroundStyle(.green)
                         Text(FormatHelpers.bytesPerSecond(net.totalReceiveRate))
                             .font(.title2.monospacedDigit())
+                            .contentTransition(.numericText())
                     }
 
                     Spacer()
                 }
+                .padding()
+                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
 
-                Divider()
-
-                Text("Throughput Over Time")
-                    .font(.headline)
+                SectionHeader("Throughput Over Time", icon: "chart.xyaxis.line", color: .teal)
 
                 DualLineChart(
                     data1: monitor.history.networkSendHistory,
@@ -47,16 +48,16 @@ public struct NetworkDetailView: View {
                     label2: "Download",
                     formatAsBytes: true
                 )
+                .padding()
+                .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
 
-                Divider()
-
-                Text("Interfaces")
-                    .font(.headline)
+                SectionHeader("Interfaces", icon: "network", color: .teal)
 
                 ForEach(net.interfaces) { iface in
                     VStack(spacing: 8) {
                         HStack {
                             Image(systemName: "network")
+                                .foregroundStyle(.teal)
                             Text(iface.name)
                                 .font(.headline)
                             Spacer()
@@ -78,14 +79,12 @@ public struct NetworkDetailView: View {
                         }
                         .font(.caption.monospacedDigit())
                     }
-                    .padding(.vertical, 4)
+                    .padding()
+                    .background(.quaternary.opacity(0.2), in: RoundedRectangle(cornerRadius: 10))
                 }
 
                 if !net.topProcesses.isEmpty {
-                    Divider()
-
-                    Text("Top Processes by Network (cumulative)")
-                        .font(.headline)
+                    SectionHeader("Top Processes by Network", icon: "arrow.up.arrow.down.circle", color: .teal)
 
                     Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
                         GridRow {
@@ -121,6 +120,8 @@ public struct NetworkDetailView: View {
                             .font(.system(.body, design: .monospaced))
                         }
                     }
+                    .padding()
+                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
                 }
             }
         }

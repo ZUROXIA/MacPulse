@@ -21,26 +21,21 @@ public struct OptimizeView: View {
 
     // MARK: - Health Score
 
-    /// 0.0 (all critical) … 1.0 (healthy). Computed from current snapshot.
     private var healthScore: Double {
         let snap = monitor.currentSnapshot
         var score = 1.0
-        // CPU penalty
         if snap.cpu.totalUsage > 0.9 { score -= 0.25 }
         else if snap.cpu.totalUsage > 0.7 { score -= 0.10 }
-        // Memory penalty
         switch snap.memory.pressureLevel {
         case .critical: score -= 0.30
         case .warning: score -= 0.15
         case .normal: break
         }
-        // Thermal penalty
         switch snap.thermal.level {
         case .critical: score -= 0.25
         case .serious: score -= 0.10
         case .fair, .nominal: break
         }
-        // Disk penalty
         for vol in snap.disk.volumes {
             if vol.usedFraction > 0.95 { score -= 0.15; break }
             else if vol.usedFraction > 0.9 { score -= 0.05; break }
@@ -67,26 +62,17 @@ public struct OptimizeView: View {
             VStack(alignment: .leading, spacing: 20) {
                 headerSection
 
-                Divider()
-
+                SectionHeader("Recommendations", icon: "lightbulb", color: .yellow)
                 recommendationsSection
-
-                Divider()
 
                 if ProcessHelper.isSandboxed {
                     sandboxLimitedSection
                 } else {
-                    Text("Quick Actions")
-                        .font(.headline)
-
+                    SectionHeader("Quick Actions", icon: "bolt.fill", color: .blue)
                     quickActionsRow
                 }
 
-                Divider()
-
-                Text("Resource Hogs")
-                    .font(.headline)
-
+                SectionHeader("Resource Hogs", icon: "flame", color: .red)
                 resourceHogsSection
             }
         }
@@ -147,7 +133,6 @@ public struct OptimizeView: View {
 
             Spacer()
 
-            // Live stats summary
             VStack(alignment: .trailing, spacing: 8) {
                 HStack(spacing: 4) {
                     Image(systemName: "cpu")
@@ -155,6 +140,7 @@ public struct OptimizeView: View {
                     Text(FormatHelpers.percentInt(monitor.currentSnapshot.cpu.totalUsage))
                         .font(.body.monospacedDigit())
                         .foregroundStyle(cpuColor)
+                        .contentTransition(.numericText())
                 }
                 HStack(spacing: 4) {
                     Image(systemName: "memorychip")
@@ -162,6 +148,7 @@ public struct OptimizeView: View {
                     Text(FormatHelpers.percentInt(monitor.currentSnapshot.memory.usedFraction))
                         .font(.body.monospacedDigit())
                         .foregroundStyle(memColor)
+                        .contentTransition(.numericText())
                 }
                 HStack(spacing: 4) {
                     Image(systemName: "thermometer.medium")
@@ -172,6 +159,8 @@ public struct OptimizeView: View {
                 }
             }
         }
+        .padding()
+        .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
     }
 
     private var cpuColor: Color {
@@ -193,9 +182,6 @@ public struct OptimizeView: View {
 
     private var recommendationsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Recommendations")
-                .font(.headline)
-
             if recommendations.isEmpty {
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark.seal.fill")
@@ -211,7 +197,7 @@ public struct OptimizeView: View {
                     Spacer()
                 }
                 .padding()
-                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 10))
+                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("All clear. System is running well.")
             } else {
@@ -224,7 +210,6 @@ public struct OptimizeView: View {
 
     private func recommendationCard(_ rec: Recommendation) -> some View {
         HStack(spacing: 0) {
-            // Severity bar
             RoundedRectangle(cornerRadius: 2)
                 .fill(severityColor(rec.severity))
                 .frame(width: 4)
@@ -256,7 +241,7 @@ public struct OptimizeView: View {
             }
             .padding(12)
         }
-        .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 10))
+        .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text(verbatim: "\(rec.severity) recommendation: \(rec.title). \(rec.detail)"))
     }
@@ -265,8 +250,7 @@ public struct OptimizeView: View {
 
     private var sandboxLimitedSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Quick Actions")
-                .font(.headline)
+            SectionHeader("Quick Actions", icon: "bolt.fill", color: .blue)
 
             HStack(spacing: 12) {
                 Image(systemName: "lock.shield")
@@ -282,7 +266,7 @@ public struct OptimizeView: View {
                 Spacer()
             }
             .padding()
-            .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 10))
+            .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
         }
     }
 
@@ -392,7 +376,7 @@ public struct OptimizeView: View {
             .padding(.vertical, 12)
         }
         .buttonStyle(.plain)
-        .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 10))
+        .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
         .disabled(isBusy)
         .accessibilityLabel(title)
         .accessibilityHint(subtitle ?? "")
@@ -407,11 +391,23 @@ public struct OptimizeView: View {
             let topMem = Array(monitor.currentSnapshot.processes.topByMemory.prefix(hogCount))
 
             if topCPU.isEmpty && topMem.isEmpty {
-                ContentUnavailableView(
-                    "No Process Data",
-                    systemImage: "list.number",
-                    description: Text("Waiting for process data...")
-                )
+                HStack {
+                    Spacer()
+                    VStack(spacing: 8) {
+                        Image(systemName: "list.number")
+                            .font(.largeTitle)
+                            .foregroundStyle(.secondary)
+                        Text("No Process Data")
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
+                        Text("Waiting for process data...")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    Spacer()
+                }
+                .padding(30)
+                .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
             } else {
                 HStack(alignment: .top, spacing: 16) {
                     if !topCPU.isEmpty {

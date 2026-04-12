@@ -17,6 +17,7 @@ public struct DiskDetailView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Image(systemName: "internaldrive")
+                                .foregroundStyle(.indigo)
                             Text(volume.name)
                                 .font(.headline)
                             Spacer()
@@ -40,17 +41,16 @@ public struct DiskDetailView: View {
                         .font(.caption.monospacedDigit())
                     }
                     .padding()
-                    .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 10))
+                    .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
                 }
 
                 if monitor.currentSnapshot.disk.volumes.isEmpty {
                     ContentUnavailableView("No Volumes", systemImage: "internaldrive", description: Text("No mounted volumes found"))
+                        .padding()
+                        .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
                 }
 
-                Divider()
-
-                Text("Disk I/O")
-                    .font(.headline)
+                SectionHeader("Disk I/O", icon: "arrow.up.arrow.down", color: .indigo)
 
                 HStack(spacing: 40) {
                     VStack(alignment: .leading, spacing: 4) {
@@ -58,6 +58,7 @@ public struct DiskDetailView: View {
                             .foregroundStyle(.blue)
                         Text(FormatHelpers.bytesPerSecond(monitor.currentSnapshot.diskIO.readRate))
                             .font(.title2.monospacedDigit())
+                            .contentTransition(.numericText())
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -65,10 +66,13 @@ public struct DiskDetailView: View {
                             .foregroundStyle(.orange)
                         Text(FormatHelpers.bytesPerSecond(monitor.currentSnapshot.diskIO.writeRate))
                             .font(.title2.monospacedDigit())
+                            .contentTransition(.numericText())
                     }
 
                     Spacer()
                 }
+                .padding()
+                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
 
                 DualLineChart(
                     data1: monitor.history.diskReadHistory,
@@ -79,6 +83,8 @@ public struct DiskDetailView: View {
                     label2: "Write",
                     formatAsBytes: true
                 )
+                .padding()
+                .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
             }
         }
     }

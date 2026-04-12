@@ -21,6 +21,8 @@ public struct GPUDetailView: View {
                         systemImage: "gpu",
                         description: Text("No GPU information available")
                     )
+                    .padding()
+                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
                 } else {
                     ForEach(gpu.gpus) { gpuInfo in
                         VStack(alignment: .leading, spacing: 12) {
@@ -78,15 +80,12 @@ public struct GPUDetailView: View {
                             }
                         }
                         .padding()
-                        .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 10))
+                        .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
                     }
                 }
 
                 if !monitor.history.gpuUtilizationHistory.isEmpty {
-                    Divider()
-
-                    Text("GPU Utilization Over Time")
-                        .font(.headline)
+                    SectionHeader("GPU Utilization Over Time", icon: "chart.xyaxis.line", color: .purple)
 
                     LiveChart(
                         data: monitor.history.gpuUtilizationHistory,
@@ -95,6 +94,8 @@ public struct GPUDetailView: View {
                         yDomain: 0...1.0,
                         formatAsPercent: true
                     )
+                    .padding()
+                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
                 }
             }
         }

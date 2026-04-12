@@ -13,6 +13,7 @@ public struct BatteryDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 if battery.isPresent {
+                    // Header card
                     HStack(spacing: 30) {
                         GaugeView(
                             title: "Battery",
@@ -32,11 +33,10 @@ public struct BatteryDetailView: View {
 
                         Spacer()
                     }
+                    .padding()
+                    .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
 
-                    Divider()
-
-                    Text("Details")
-                        .font(.headline)
+                    SectionHeader("Details", icon: "info.circle", color: .green)
 
                     Grid(alignment: .leading, horizontalSpacing: 20, verticalSpacing: 8) {
                         GridRow {
@@ -71,11 +71,10 @@ public struct BatteryDetailView: View {
                             }
                         }
                     }
+                    .padding()
+                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
 
-                    Divider()
-
-                    Text("Charge Over Time")
-                        .font(.headline)
+                    SectionHeader("Charge Over Time", icon: "chart.xyaxis.line", color: .green)
 
                     LiveChart(
                         data: monitor.history.batteryHistory,
@@ -84,12 +83,16 @@ public struct BatteryDetailView: View {
                         yDomain: 0...1.0,
                         formatAsPercent: true
                     )
+                    .padding()
+                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
                 } else {
                     ContentUnavailableView(
                         "No Battery",
                         systemImage: "battery.0",
                         description: Text("No battery detected on this Mac")
                     )
+                    .padding()
+                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
                 }
             }
         }
