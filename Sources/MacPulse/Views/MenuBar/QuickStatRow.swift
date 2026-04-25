@@ -4,12 +4,12 @@ public struct QuickStatRow: View {
     public let icon: String
     public let label: String
     public let value: String
-    public var color: Color = .primary
+    public var color: Color = ZuroxiaTheme.textPrimary
     public var sparklineData: [Double]? = nil
 
     @State private var isHovered = false
 
-    public init(icon: String, label: String, value: String, color: Color = .primary, sparklineData: [Double]? = nil) {
+    public init(icon: String, label: String, value: String, color: Color = ZuroxiaTheme.textPrimary, sparklineData: [Double]? = nil) {
         self.icon = icon
         self.label = label
         self.value = value
@@ -22,25 +22,36 @@ public struct QuickStatRow: View {
             Image(systemName: icon)
                 .frame(width: 20)
                 .foregroundStyle(color)
+                .cyberGlow(color: color)
+                
             Text(label)
-                .foregroundStyle(.secondary)
+                .font(ZuroxiaTheme.font(10, weight: .bold))
+                .tracking(1.5)
+                .foregroundStyle(ZuroxiaTheme.textSecondary)
+                
             Spacer()
+            
             if let data = sparklineData, data.count >= 2 {
                 SparklineView(data: data, color: color)
             }
+            
             Text(value)
+                .font(ZuroxiaTheme.font(12, weight: .bold))
+                .foregroundStyle(ZuroxiaTheme.textPrimary)
                 .monospacedDigit()
-                .fontWeight(.medium)
                 .contentTransition(.numericText())
         }
-        .font(.system(.body, design: .rounded))
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
         .background(
             isHovered
-                ? Color.primary.opacity(0.06)
-                : Color.clear,
-            in: RoundedRectangle(cornerRadius: 6)
+                ? ZuroxiaTheme.borderFaint
+                : ZuroxiaTheme.bgPanel,
+            in: RoundedRectangle(cornerRadius: 4)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 4)
+                .stroke(isHovered ? ZuroxiaTheme.borderLight : ZuroxiaTheme.borderFaint, lineWidth: 1)
         )
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.15)) {

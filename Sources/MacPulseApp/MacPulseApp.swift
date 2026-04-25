@@ -87,17 +87,20 @@ struct MacPulseApp: App {
         Settings {
             VStack(spacing: 0) {
                 SettingsView(monitor: monitor, settings: settings)
-                Divider()
+                Divider().background(ZuroxiaTheme.borderFaint)
                 HStack {
                     CheckForUpdatesView(updateChecker: updateChecker)
+                        .font(ZuroxiaTheme.font(10, weight: .bold))
+                        .foregroundStyle(ZuroxiaTheme.cyan)
                     Spacer()
                     Text("v\(updateChecker.currentVersion)")
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
+                        .font(ZuroxiaTheme.font(10, weight: .bold))
+                        .foregroundStyle(ZuroxiaTheme.textMuted)
                 }
                 .padding()
             }
             .frame(width: 400, height: 500)
+            .applyZuroxiaEnvironment()
         }
     }
 

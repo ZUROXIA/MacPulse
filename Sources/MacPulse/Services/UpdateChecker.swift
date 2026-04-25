@@ -16,7 +16,7 @@ public final class UpdateChecker {
     private let owner: String
     private let repo: String
 
-    public init(owner: String = "macpulse", repo: String = "MacPulse", currentVersion: String = "1.0.0") {
+    public init(owner: String = "ZUROXIA", repo: String = "MacPulse", currentVersion: String = "1.0.0") {
         self.owner = owner
         self.repo = repo
         self.currentVersion = currentVersion
