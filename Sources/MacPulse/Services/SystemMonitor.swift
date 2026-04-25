@@ -17,6 +17,7 @@ public final class SystemMonitor {
     private var temperatureCollector = TemperatureCollector()
     private var processCollector = ProcessCollector()
     private var gpuCollector = GPUCollector()
+    private var defenseCollector = DefenseCollector()
 
     public var alertManager = AlertManager()
     private let store = MetricsStore()

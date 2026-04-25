@@ -13,6 +13,7 @@ public struct SystemSnapshot: Sendable, Identifiable {
     public var temperature: TemperatureMetrics
     public var processes: ProcessMetrics
     public var gpu: GPUMetrics
+    public var defense: DefenseMetrics
 
     public static let empty = SystemSnapshot(
         timestamp: .now,
@@ -25,10 +26,11 @@ public struct SystemSnapshot: Sendable, Identifiable {
         diskIO: .zero,
         temperature: .unavailable,
         processes: .empty,
-        gpu: .empty
+        gpu: .empty,
+        defense: .empty
     )
 
-    public init(timestamp: Date, cpu: CPUMetrics, memory: MemoryMetrics, disk: DiskMetrics, battery: BatteryMetrics, network: NetworkMetrics, thermal: ThermalMetrics, diskIO: DiskIOMetrics = .zero, temperature: TemperatureMetrics = .unavailable, processes: ProcessMetrics = .empty, gpu: GPUMetrics = .empty) {
+    public init(timestamp: Date, cpu: CPUMetrics, memory: MemoryMetrics, disk: DiskMetrics, battery: BatteryMetrics, network: NetworkMetrics, thermal: ThermalMetrics, diskIO: DiskIOMetrics = .zero, temperature: TemperatureMetrics = .unavailable, processes: ProcessMetrics = .empty, gpu: GPUMetrics = .empty, defense: DefenseMetrics = .empty) {
         self.timestamp = timestamp
         self.cpu = cpu
         self.memory = memory
@@ -40,5 +42,6 @@ public struct SystemSnapshot: Sendable, Identifiable {
         self.temperature = temperature
         self.processes = processes
         self.gpu = gpu
+        self.defense = defense
     }
 }
