@@ -110,14 +110,39 @@ public enum ProcessHelper {
     }
 
     /// Removes safe cache directories under `~/Library/Caches/`,
-    /// skipping browser profiles and system-critical caches.
+    /// explicitly targeting massive developer caches (Xcode DerivedData, Homebrew, npm),
+    /// while skipping browser profiles and system-critical caches.
     /// Returns the number of bytes freed.
     public static func clearUserCaches() -> UInt64 {
         let fm = FileManager.default
-        let cachesURL = fm.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Caches")
+        let homeURL = fm.homeDirectoryForCurrentUser
+        let cachesURL = homeURL.appendingPathComponent("Library/Caches")
 
-        // Skip browser caches and system-critical directories
+        // 1. High-yield Developer Caches
+        let targetCaches = [
+            homeURL.appendingPathComponent("Library/Developer/Xcode/DerivedData"),
+            homeURL.appendingPathComponent("Library/Caches/Homebrew"),
+            homeURL.appendingPathComponent(".npm/_cacache"),
+            homeURL.appendingPathComponent("Library/Caches/CocoaPods"),
+            homeURL.appendingPathComponent(".gradle/caches")
+        ]
+        
+        var freed: UInt64 = 0
+
+        for target in targetCaches {
+            if fm.fileExists(atPath: target.path) {
+                let size = directorySize(url: target)
+                do {
+                    try fm.removeItem(at: target)
+                    freed += size
+                    logger.info("Cleared dev cache at \(target.path): \(size) bytes")
+                } catch {
+                    logger.error("Failed to clear \(target.path): \(error.localizedDescription)")
+                }
+            }
+        }
+
+        // 2. Standard Library/Caches (Safe subset)
         let skipPrefixes = [
             "com.apple.Safari",
             "com.google.Chrome",
@@ -126,33 +151,31 @@ public enum ProcessHelper {
             "com.brave.Browser",
             "com.apple.nsurlsessiond",
             "CloudKit",
+            "com.apple.messages",
+            "com.apple.mail"
         ]
 
-        var freed: UInt64 = 0
-
-        guard let entries = try? fm.contentsOfDirectory(
+        if let entries = try? fm.contentsOfDirectory(
             at: cachesURL,
             includingPropertiesForKeys: [.isDirectoryKey],
             options: [.skipsHiddenFiles]
-        ) else {
-            return 0
-        }
-
-        for entry in entries {
-            let name = entry.lastPathComponent
-            if skipPrefixes.contains(where: { name.hasPrefix($0) }) {
-                continue
-            }
-            let size = directorySize(url: entry)
-            do {
-                try fm.removeItem(at: entry)
-                freed += size
-            } catch {
-                // Skip items we can't remove
+        ) {
+            for entry in entries {
+                let name = entry.lastPathComponent
+                if skipPrefixes.contains(where: { name.hasPrefix($0) }) {
+                    continue
+                }
+                let size = directorySize(url: entry)
+                do {
+                    try fm.removeItem(at: entry)
+                    freed += size
+                } catch {
+                    // Skip items we can't remove
+                }
             }
         }
 
-        logger.info("Cleared user caches: freed \(freed) bytes")
+        logger.info("Cleared all user caches: total freed \(freed) bytes")
         return freed
     }
     
