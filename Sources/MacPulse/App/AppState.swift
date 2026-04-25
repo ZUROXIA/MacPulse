@@ -14,6 +14,7 @@ public final class AppState {
         case disk = "Disk"
         case battery = "Battery"
         case network = "Network"
+        case logs = "Logs"
         case defense = "Defense"
         case thermal = "Thermal"
         case fans = "Fans"
@@ -31,6 +32,7 @@ public final class AppState {
             case .disk: "internaldrive"
             case .battery: "battery.100"
             case .network: "network"
+            case .logs: "terminal"
             case .defense: "shield.lefthalf.filled"
             case .thermal: "thermometer.medium"
             case .fans: "fan.fill"
@@ -48,6 +50,7 @@ public final class AppState {
             case .disk: .indigo
             case .battery: .green
             case .network: .teal
+            case .logs: .cyan
             case .defense: .green
             case .thermal: .red
             case .fans: .cyan
@@ -66,7 +69,7 @@ public final class AppState {
         public var section: Section {
             switch self {
             case .cpu, .gpu, .memory, .disk, .battery: .hardware
-            case .network, .defense, .thermal, .fans, .processes: .system
+            case .network, .logs, .defense, .thermal, .fans, .processes: .system
             case .optimize, .settings: .tools
             }
         }

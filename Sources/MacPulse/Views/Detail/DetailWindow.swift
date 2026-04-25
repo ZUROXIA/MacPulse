@@ -11,7 +11,7 @@ public struct DetailWindow: View {
 
     private static let tabShortcuts: [AppState.DetailTab: KeyEquivalent] = [
         .cpu: "1", .gpu: "2", .memory: "3", .disk: "4", .battery: "5",
-        .network: "6", .defense: "7", .thermal: "8", .fans: "9", .processes: "0", .optimize: "-",
+        .network: "6", .logs: "7", .defense: "8", .thermal: "9", .fans: "0", .processes: "-", .optimize: "=",
     ]
 
     public var body: some View {
@@ -57,6 +57,8 @@ public struct DetailWindow: View {
                     BatteryDetailView(monitor: monitor)
                 case .network:
                     NetworkDetailView(monitor: monitor)
+                case .logs:
+                    TelemetryLogView()
                 case .defense:
                     DefenseDetailView(monitor: monitor)
                 case .thermal:
