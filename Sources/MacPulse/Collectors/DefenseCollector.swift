@@ -1,19 +1,29 @@
 import Foundation
 
 public struct DefenseCollector: MetricsCollector {
+    private final class Cache: @unchecked Sendable {
+        var lastMetrics: DefenseMetrics = .empty
+        var isFetching = false
+    }
+    
+    private let cache = Cache()
+
     public init() {}
 
     public mutating func collect() -> DefenseMetrics {
-        // Run our heavy network parsing asynchronously, but for a synchronous collector
-        // we must block or collect quickly. ProcessHelper.getDefenseMetrics is synchronous.
-        // It's reasonably fast since we cap at 50 connections.
-        
-        let data = ProcessHelper.getDefenseMetrics()
-        
-        return DefenseMetrics(
-            activeConnections: data.connections,
-            firewallRules: data.rules,
-            pfEnabled: data.pfEnabled
-        )
+        if !cache.isFetching {
+            cache.isFetching = true
+            let c = cache
+            Task.detached {
+                let data = ProcessHelper.getDefenseMetrics()
+                c.lastMetrics = DefenseMetrics(
+                    activeConnections: data.connections,
+                    firewallRules: data.rules,
+                    pfEnabled: data.pfEnabled
+                )
+                c.isFetching = false
+            }
+        }
+        return cache.lastMetrics
     }
 }

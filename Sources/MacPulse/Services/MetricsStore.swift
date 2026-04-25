@@ -9,7 +9,8 @@ public final class MetricsStore: @unchecked Sendable {
     private let queue = DispatchQueue(label: "com.macpulse.metricsstore")
 
     public init() {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let fallback = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library/Application Support")
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first ?? fallback
         let dir = appSupport.appendingPathComponent("MacPulse", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         self.path = dir.appendingPathComponent("metrics.sqlite").path

@@ -45,7 +45,7 @@ public final class LogStreamService {
         do {
             try p.run()
             
-            task = Task.detached { [weak self] in
+            task = Task {
                 let formatter = DateFormatter()
                 formatter.dateFormat = "HH:mm:ss"
                 
@@ -55,12 +55,9 @@ public final class LogStreamService {
                         let isWarn = line.lowercased().contains("error") || line.lowercased().contains("fault") || line.lowercased().contains("warning")
                         let entry = LogEntry(timestamp: time, message: line.trimmingCharacters(in: .whitespacesAndNewlines), isWarning: isWarn)
                         
-                        await MainActor.run {
-                            guard let self = self else { return }
-                            self.logs.insert(entry, at: 0)
-                            if self.logs.count > 100 {
-                                self.logs.removeLast()
-                            }
+                        self.logs.insert(entry, at: 0)
+                        if self.logs.count > 100 {
+                            self.logs.removeLast()
                         }
                     }
                 } catch {

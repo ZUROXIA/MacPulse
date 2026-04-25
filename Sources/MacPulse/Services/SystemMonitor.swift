@@ -87,7 +87,8 @@ public final class SystemMonitor {
             diskIO: diskIOCollector.collect(),
             temperature: temperatureCollector.collect(),
             processes: processCollector.collect(),
-            gpu: gpuCollector.collect()
+            gpu: gpuCollector.collect(),
+            defense: defenseCollector.collect()
         )
         currentSnapshot = snapshot
         history.append(snapshot)
