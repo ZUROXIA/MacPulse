@@ -11,149 +11,222 @@ public struct SettingsView: View {
 
     public var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Settings")
-                    .font(.title2.bold())
+            VStack(alignment: .leading, spacing: 24) {
+                HStack {
+                    Text("CONFIG MATRIX")
+                        .font(ZuroxiaTheme.font(16, weight: .bold))
+                        .tracking(2.0)
+                        .foregroundStyle(ZuroxiaTheme.textPrimary)
+                    Spacer()
+                    Text("USER: APEX_01")
+                        .font(ZuroxiaTheme.font(10, weight: .medium))
+                        .tracking(2.0)
+                        .foregroundStyle(ZuroxiaTheme.textMuted)
+                }
+                .padding(.bottom, 8)
+                .border(width: 1, edges: [.bottom], color: ZuroxiaTheme.borderFaint)
 
                 // General
-                SectionHeader("General", icon: "gearshape", color: .gray)
+                SectionHeader("CORE PARAMETERS", icon: "gearshape.fill", color: ZuroxiaTheme.cyan)
 
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 16) {
                     HStack {
-                        Text("Update Interval")
+                        Text("UPDATE INTERVAL")
+                            .font(ZuroxiaTheme.font(10, weight: .medium))
+                            .tracking(1.5)
+                            .foregroundStyle(ZuroxiaTheme.textSecondary)
                         Spacer()
                         Picker("", selection: $settings.updateInterval) {
                             ForEach(AppSettings.intervals, id: \.1) { name, interval in
-                                Text(name).tag(interval)
+                                Text(name.uppercased()).tag(interval)
                             }
                         }
+                        .pickerStyle(.menu)
                         .frame(width: 150)
                         .onChange(of: settings.updateInterval) { _, newValue in
                             monitor.restart(interval: newValue)
                         }
                     }
 
-                    Toggle("Launch at Login", isOn: $settings.launchAtLogin)
+                    Toggle("LAUNCH AT LOGIN", isOn: $settings.launchAtLogin)
+                        .font(ZuroxiaTheme.font(10, weight: .medium))
+                        .tracking(1.5)
+                        .foregroundStyle(ZuroxiaTheme.textSecondary)
                 }
-                .padding()
-                .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                .padding(24)
+                .cyberPanel()
 
                 // Menu Bar
-                SectionHeader("Menu Bar", icon: "menubar.rectangle", color: .blue)
-
-                VStack(alignment: .leading, spacing: 12) {
-                    Toggle("Graph mode (mini chart)", isOn: $settings.menuBarGraphMode)
-                    if !settings.menuBarGraphMode {
-                        Toggle("Show CPU %", isOn: $settings.showCPUInMenuBar)
-                        Toggle("Show Memory %", isOn: $settings.showMemoryInMenuBar)
-                        Toggle("Show Network Rate", isOn: $settings.showNetworkInMenuBar)
-                    }
-                }
-                .padding()
-                .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
-
-                // Alerts
-                SectionHeader("Alerts", icon: "bell.badge", color: .orange)
-
-                VStack(alignment: .leading, spacing: 12) {
-                    Toggle("CPU usage alert (>90% for 30s)", isOn: $monitor.alertManager.cpuAlertEnabled)
-                    Toggle("Disk space alert (>95% full)", isOn: $monitor.alertManager.diskAlertEnabled)
-                }
-                .padding()
-                .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
-
-                // Optimize
-                SectionHeader("Optimize", icon: "wand.and.stars", color: .mint)
+                SectionHeader("HUD CONFIGURATION", icon: "menubar.rectangle", color: ZuroxiaTheme.purple)
 
                 VStack(alignment: .leading, spacing: 16) {
+                    Toggle("GRAPH MODE (MINI CHART)", isOn: $settings.menuBarGraphMode)
+                        .font(ZuroxiaTheme.font(10, weight: .medium))
+                        .tracking(1.5)
+                        .foregroundStyle(ZuroxiaTheme.textSecondary)
+                        
+                    if !settings.menuBarGraphMode {
+                        Divider().background(ZuroxiaTheme.borderFaint)
+                        
+                        Toggle("SHOW CPU %", isOn: $settings.showCPUInMenuBar)
+                            .font(ZuroxiaTheme.font(10, weight: .medium))
+                            .tracking(1.5)
+                            .foregroundStyle(ZuroxiaTheme.textSecondary)
+                        Toggle("SHOW MEMORY %", isOn: $settings.showMemoryInMenuBar)
+                            .font(ZuroxiaTheme.font(10, weight: .medium))
+                            .tracking(1.5)
+                            .foregroundStyle(ZuroxiaTheme.textSecondary)
+                        Toggle("SHOW NETWORK RATE", isOn: $settings.showNetworkInMenuBar)
+                            .font(ZuroxiaTheme.font(10, weight: .medium))
+                            .tracking(1.5)
+                            .foregroundStyle(ZuroxiaTheme.textSecondary)
+                    }
+                }
+                .padding(24)
+                .cyberPanel()
+
+                // Alerts
+                SectionHeader("AUTONOMOUS DEFENSE", icon: "bell.badge.fill", color: ZuroxiaTheme.emerald)
+
+                VStack(alignment: .leading, spacing: 16) {
+                    Toggle("CPU USAGE ALERT (>90% FOR 30S)", isOn: $monitor.alertManager.cpuAlertEnabled)
+                        .font(ZuroxiaTheme.font(10, weight: .medium))
+                        .tracking(1.5)
+                        .foregroundStyle(ZuroxiaTheme.textSecondary)
+                    Toggle("DISK SPACE ALERT (>95% FULL)", isOn: $monitor.alertManager.diskAlertEnabled)
+                        .font(ZuroxiaTheme.font(10, weight: .medium))
+                        .tracking(1.5)
+                        .foregroundStyle(ZuroxiaTheme.textSecondary)
+                }
+                .padding(24)
+                .cyberPanel()
+
+                // Optimize
+                SectionHeader("DIAGNOSTIC THRESHOLDS", icon: "wand.and.stars", color: ZuroxiaTheme.crimson)
+
+                VStack(alignment: .leading, spacing: 24) {
                     // Thresholds
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Recommendation Thresholds")
-                            .font(.subheadline.bold())
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("RECOMMENDATION THRESHOLDS")
+                            .font(ZuroxiaTheme.font(11, weight: .bold))
+                            .tracking(2.0)
+                            .foregroundStyle(ZuroxiaTheme.textPrimary)
+                            .padding(.bottom, 4)
 
                         thresholdRow(
-                            label: "CPU warning",
+                            label: "CPU WARNING",
                             value: $settings.cpuWarningThreshold,
                             range: 0.5...0.99
                         )
                         thresholdRow(
-                            label: "CPU critical",
+                            label: "CPU CRITICAL",
                             value: $settings.cpuCriticalThreshold,
                             range: 0.5...1.0
                         )
                         thresholdRow(
-                            label: "Disk warning",
+                            label: "DISK WARNING",
                             value: $settings.diskWarningThreshold,
                             range: 0.5...0.99
                         )
                         thresholdRow(
-                            label: "Battery warning",
+                            label: "BATTERY WARNING",
                             value: $settings.batteryWarningThreshold,
                             range: 0.05...0.5
                         )
                     }
 
-                    Divider()
+                    Divider().background(ZuroxiaTheme.borderFaint)
 
                     // Rule toggles
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Enabled Rules")
-                            .font(.subheadline.bold())
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("ENABLED RULES")
+                            .font(ZuroxiaTheme.font(11, weight: .bold))
+                            .tracking(2.0)
+                            .foregroundStyle(ZuroxiaTheme.textPrimary)
+                            .padding(.bottom, 4)
 
-                        Toggle("Memory pressure", isOn: $settings.enableMemoryRule)
-                        Toggle("CPU usage", isOn: $settings.enableCPURule)
-                        Toggle("Disk space", isOn: $settings.enableDiskRule)
-                        Toggle("Thermal state", isOn: $settings.enableThermalRule)
-                        Toggle("Battery level", isOn: $settings.enableBatteryRule)
+                        Group {
+                            Toggle("MEMORY PRESSURE", isOn: $settings.enableMemoryRule)
+                            Toggle("CPU USAGE", isOn: $settings.enableCPURule)
+                            Toggle("DISK SPACE", isOn: $settings.enableDiskRule)
+                            Toggle("THERMAL STATE", isOn: $settings.enableThermalRule)
+                            Toggle("BATTERY LEVEL", isOn: $settings.enableBatteryRule)
+                        }
+                        .font(ZuroxiaTheme.font(10, weight: .medium))
+                        .tracking(1.5)
+                        .foregroundStyle(ZuroxiaTheme.textSecondary)
                     }
 
-                    Divider()
+                    Divider().background(ZuroxiaTheme.borderFaint)
 
                     // Behavior
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Behavior")
-                            .font(.subheadline.bold())
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("BEHAVIOR")
+                            .font(ZuroxiaTheme.font(11, weight: .bold))
+                            .tracking(2.0)
+                            .foregroundStyle(ZuroxiaTheme.textPrimary)
+                            .padding(.bottom, 4)
 
                         HStack {
-                            Text("Resource hogs shown")
+                            Text("RESOURCE HOGS SHOWN")
+                                .font(ZuroxiaTheme.font(10, weight: .medium))
+                                .tracking(1.5)
+                                .foregroundStyle(ZuroxiaTheme.textSecondary)
                             Spacer()
                             Picker("", selection: $settings.resourceHogCount) {
                                 ForEach(AppSettings.hogCountOptions, id: \.self) { count in
                                     Text("\(count)").tag(count)
                                 }
                             }
+                            .pickerStyle(.menu)
                             .frame(width: 80)
                         }
 
-                        Toggle("Confirm before terminating processes", isOn: $settings.confirmBeforeTerminate)
+                        Toggle("CONFIRM BEFORE TERMINATING PROCESSES", isOn: $settings.confirmBeforeTerminate)
+                            .font(ZuroxiaTheme.font(10, weight: .medium))
+                            .tracking(1.5)
+                            .foregroundStyle(ZuroxiaTheme.textSecondary)
                     }
                 }
-                .padding()
-                .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                .padding(24)
+                .cyberPanel()
 
                 // Fan
-                SectionHeader("Fan Control", icon: "fan", color: .cyan)
+                SectionHeader("THERMAL CONTROL", icon: "fan", color: ZuroxiaTheme.cyan)
 
-                VStack(alignment: .leading, spacing: 12) {
-                    Toggle("Auto-switch to Performance under thermal stress", isOn: $settings.fanThermalAutoSwitch)
+                VStack(alignment: .leading, spacing: 16) {
+                    Toggle("AUTO-SWITCH TO PERFORMANCE UNDER THERMAL STRESS", isOn: $settings.fanThermalAutoSwitch)
+                        .font(ZuroxiaTheme.font(10, weight: .medium))
+                        .tracking(1.5)
+                        .foregroundStyle(ZuroxiaTheme.textSecondary)
+
+                    Divider().background(ZuroxiaTheme.borderFaint)
 
                     HStack {
-                        Text("Current profile")
-                            .foregroundStyle(.secondary)
+                        Text("CURRENT PROFILE")
+                            .font(ZuroxiaTheme.font(10, weight: .medium))
+                            .tracking(1.5)
+                            .foregroundStyle(ZuroxiaTheme.textSecondary)
                         Spacer()
-                        HStack(spacing: 4) {
+                        HStack(spacing: 8) {
                             Circle()
                                 .fill(currentFanProfile.color)
                                 .frame(width: 8, height: 8)
-                            Text(settings.fanProfile)
-                                .fontWeight(.medium)
+                                .cyberGlow(color: currentFanProfile.color)
+                            Text(settings.fanProfile.uppercased())
+                                .font(ZuroxiaTheme.font(11, weight: .bold))
+                                .tracking(2.0)
+                                .foregroundStyle(ZuroxiaTheme.textPrimary)
                         }
                     }
                 }
-                .padding()
-                .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                .padding(24)
+                .cyberPanel()
             }
+            .padding()
         }
+        .scrollContentBackground(.hidden)
+        .background(ZuroxiaTheme.bgDark)
     }
 
     private var currentFanProfile: FanProfile {
@@ -163,10 +236,16 @@ public struct SettingsView: View {
     private func thresholdRow(label: String, value: Binding<Double>, range: ClosedRange<Double>) -> some View {
         HStack {
             Text(label)
+                .font(ZuroxiaTheme.font(10, weight: .medium))
+                .tracking(1.5)
+                .foregroundStyle(ZuroxiaTheme.textSecondary)
             Spacer()
             Slider(value: value, in: range, step: 0.05)
+                .tint(ZuroxiaTheme.crimson)
                 .frame(width: 150)
             Text(FormatHelpers.percentInt(value.wrappedValue))
+                .font(ZuroxiaTheme.font(10, weight: .bold))
+                .foregroundStyle(ZuroxiaTheme.textPrimary)
                 .monospacedDigit()
                 .frame(width: 40, alignment: .trailing)
         }

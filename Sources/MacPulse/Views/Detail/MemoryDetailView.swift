@@ -12,60 +12,69 @@ public struct MemoryDetailView: View {
 
     public var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 24) {
                 // Header card
                 HStack(spacing: 30) {
                     GaugeView(
                         title: "Memory",
                         value: mem.usedFraction,
-                        color: .orange
+                        color: ZuroxiaTheme.purple
                     )
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Memory Pressure")
-                            .font(.title2.bold())
-                        Text("\(FormatHelpers.bytes(mem.used)) of \(FormatHelpers.bytes(mem.total)) used")
-                            .foregroundStyle(.secondary)
+                        Text("MEMORY PRESSURE")
+                            .font(ZuroxiaTheme.font(16, weight: .bold))
+                            .tracking(2.0)
+                            .foregroundStyle(ZuroxiaTheme.purple)
+                            .cyberGlow(color: ZuroxiaTheme.purple)
+                            
+                        Text("\(FormatHelpers.bytes(mem.used)) OF \(FormatHelpers.bytes(mem.total)) USED")
+                            .font(ZuroxiaTheme.font(10, weight: .medium))
+                            .tracking(1.5)
+                            .foregroundStyle(ZuroxiaTheme.textMuted)
                     }
 
                     Spacer()
 
-                    VStack(spacing: 4) {
+                    VStack(spacing: 6) {
                         Image(systemName: pressureIcon)
                             .font(.title)
                             .foregroundStyle(pressureColor)
-                        Text(mem.pressureLevel.label)
-                            .font(.caption.bold())
+                            .cyberGlow(color: pressureColor)
+                            
+                        Text(mem.pressureLevel.label.uppercased())
+                            .font(ZuroxiaTheme.font(10, weight: .bold))
+                            .tracking(2.0)
                             .foregroundStyle(pressureColor)
                     }
                 }
-                .padding()
-                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
+                .padding(24)
+                .cyberPanel(borderColor: ZuroxiaTheme.borderLight)
 
-                SectionHeader("Breakdown", icon: "chart.pie", color: .orange)
+                SectionHeader("ALLOCATION BREAKDOWN", icon: "chart.pie", color: ZuroxiaTheme.purple)
 
-                Grid(alignment: .leading, horizontalSpacing: 20, verticalSpacing: 8) {
-                    memoryRow("Active", value: mem.active, color: .orange)
-                    memoryRow("Wired", value: mem.wired, color: .red)
-                    memoryRow("Compressed", value: mem.compressed, color: .purple)
-                    memoryRow("Free", value: mem.free, color: .green)
+                Grid(alignment: .leading, horizontalSpacing: 20, verticalSpacing: 12) {
+                    memoryRow("ACTIVE", value: mem.active, color: ZuroxiaTheme.purple)
+                    memoryRow("WIRED", value: mem.wired, color: ZuroxiaTheme.crimson)
+                    memoryRow("COMPRESSED", value: mem.compressed, color: ZuroxiaTheme.cyan)
+                    memoryRow("FREE", value: mem.free, color: ZuroxiaTheme.emerald)
                 }
-                .padding()
-                .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                .padding(16)
+                .cyberPanel()
 
-                SectionHeader("Memory Usage Over Time", icon: "chart.xyaxis.line", color: .orange)
+                SectionHeader("MEMORY USAGE HISTORY", icon: "chart.xyaxis.line", color: ZuroxiaTheme.purple)
 
                 LiveChart(
                     data: monitor.history.memoryHistory,
-                    color: .orange,
+                    color: ZuroxiaTheme.purple,
                     label: "Memory",
                     yDomain: 0...1.0,
                     formatAsPercent: true
                 )
-                .padding()
-                .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                .padding(16)
+                .cyberPanel()
 
-                SectionHeader("Memory Pressure Over Time", icon: "gauge.with.dots.needle.50percent", color: .orange)
+                SectionHeader("PRESSURE STATE HISTORY", icon: "gauge.with.dots.needle.50percent", color: ZuroxiaTheme.purple)
 
                 let pressureData = monitor.history.memoryPressureHistory
                 Chart {
@@ -80,42 +89,52 @@ public struct MemoryDetailView: View {
                             x: .value("Time", point.0),
                             y: .value("Level", point.1)
                         )
-                        .foregroundStyle(.gray.opacity(0.3))
+                        .foregroundStyle(ZuroxiaTheme.borderLight)
                         .interpolationMethod(.stepCenter)
                     }
                 }
                 .chartYScale(domain: 0...2)
                 .chartYAxis {
                     AxisMarks(values: [0, 1, 2]) { value in
-                        AxisGridLine()
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [2, 4]))
+                            .foregroundStyle(ZuroxiaTheme.borderFaint)
                         AxisValueLabel {
                             if let v = value.as(Int.self) {
-                                Text(MemoryPressureLevel(rawValue: v)?.label ?? "")
+                                Text(MemoryPressureLevel(rawValue: v)?.label.uppercased() ?? "")
+                                    .font(ZuroxiaTheme.font(9, weight: .medium))
+                                    .tracking(1.0)
+                                    .foregroundStyle(ZuroxiaTheme.textMuted)
                             }
                         }
                     }
                 }
                 .chartXAxis {
                     AxisMarks(values: .stride(by: .minute, count: 2)) { _ in
-                        AxisGridLine()
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [2, 4]))
+                            .foregroundStyle(ZuroxiaTheme.borderFaint)
                         AxisValueLabel(format: .dateTime.minute().second())
+                            .font(ZuroxiaTheme.font(9))
+                            .foregroundStyle(ZuroxiaTheme.textMuted)
                     }
                 }
                 .frame(height: 150)
-                .padding()
-                .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                .padding(16)
+                .cyberPanel()
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Memory pressure history chart")
                 .accessibilityValue("Current: \(mem.pressureLevel.label)")
             }
+            .padding()
         }
+        .scrollContentBackground(.hidden)
+        .background(ZuroxiaTheme.bgDark)
     }
 
     private var pressureColor: Color {
         switch mem.pressureLevel {
-        case .normal: .green
+        case .normal: ZuroxiaTheme.emerald
         case .warning: .orange
-        case .critical: .red
+        case .critical: ZuroxiaTheme.crimson
         }
     }
 
@@ -129,9 +148,9 @@ public struct MemoryDetailView: View {
 
     private func pressureColorForValue(_ value: Int) -> Color {
         switch value {
-        case 0: .green
+        case 0: ZuroxiaTheme.emerald
         case 1: .orange
-        default: .red
+        default: ZuroxiaTheme.crimson
         }
     }
 
@@ -139,11 +158,18 @@ public struct MemoryDetailView: View {
         GridRow {
             Circle()
                 .fill(color)
-                .frame(width: 10, height: 10)
+                .frame(width: 8, height: 8)
+                .cyberGlow(color: color)
+                
             Text(label)
+                .font(ZuroxiaTheme.font(10, weight: .medium))
+                .tracking(1.5)
+                .foregroundStyle(ZuroxiaTheme.textSecondary)
                 .frame(width: 100, alignment: .leading)
+                
             Text(FormatHelpers.bytes(value))
-                .monospacedDigit()
+                .font(ZuroxiaTheme.font(12, weight: .bold))
+                .foregroundStyle(ZuroxiaTheme.textPrimary)
         }
     }
 }

@@ -11,119 +11,149 @@ public struct NetworkDetailView: View {
 
     public var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Network Throughput")
-                    .font(.title2.bold())
-
+            VStack(alignment: .leading, spacing: 24) {
+                // Header card
                 HStack(spacing: 40) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Label("Upload", systemImage: "arrow.up")
-                            .foregroundStyle(.blue)
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "arrow.up")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(ZuroxiaTheme.cyan)
+                                .cyberGlow(color: ZuroxiaTheme.cyan)
+                            Text("TX STREAM (UPLOAD)")
+                                .font(ZuroxiaTheme.font(10, weight: .bold))
+                                .tracking(2.0)
+                                .foregroundStyle(ZuroxiaTheme.textMuted)
+                        }
+                        
                         Text(FormatHelpers.bytesPerSecond(net.totalSendRate))
-                            .font(.title2.monospacedDigit())
+                            .font(ZuroxiaTheme.font(28, weight: .light))
+                            .foregroundStyle(ZuroxiaTheme.textPrimary)
                             .contentTransition(.numericText())
                     }
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Label("Download", systemImage: "arrow.down")
-                            .foregroundStyle(.green)
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "arrow.down")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(ZuroxiaTheme.emerald)
+                                .cyberGlow(color: ZuroxiaTheme.emerald)
+                            Text("RX STREAM (DOWNLOAD)")
+                                .font(ZuroxiaTheme.font(10, weight: .bold))
+                                .tracking(2.0)
+                                .foregroundStyle(ZuroxiaTheme.textMuted)
+                        }
+                        
                         Text(FormatHelpers.bytesPerSecond(net.totalReceiveRate))
-                            .font(.title2.monospacedDigit())
+                            .font(ZuroxiaTheme.font(28, weight: .light))
+                            .foregroundStyle(ZuroxiaTheme.textPrimary)
                             .contentTransition(.numericText())
                     }
 
                     Spacer()
                 }
-                .padding()
-                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
+                .padding(24)
+                .cyberPanel(borderColor: ZuroxiaTheme.borderLight)
 
-                SectionHeader("Throughput Over Time", icon: "chart.xyaxis.line", color: .teal)
+                SectionHeader("THROUGHPUT HISTORY", icon: "chart.xyaxis.line", color: ZuroxiaTheme.cyan)
 
                 DualLineChart(
                     data1: monitor.history.networkSendHistory,
                     data2: monitor.history.networkReceiveHistory,
-                    color1: .blue,
-                    color2: .green,
+                    color1: ZuroxiaTheme.cyan,
+                    color2: ZuroxiaTheme.emerald,
                     label1: "Upload",
                     label2: "Download",
                     formatAsBytes: true
                 )
-                .padding()
-                .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                .padding(16)
+                .cyberPanel()
 
-                SectionHeader("Interfaces", icon: "network", color: .teal)
+                SectionHeader("ACTIVE INTERFACES", icon: "network", color: ZuroxiaTheme.cyan)
 
                 ForEach(net.interfaces) { iface in
-                    VStack(spacing: 8) {
+                    VStack(spacing: 12) {
                         HStack {
                             Image(systemName: "network")
-                                .foregroundStyle(.teal)
-                            Text(iface.name)
-                                .font(.headline)
+                                .foregroundStyle(ZuroxiaTheme.cyan)
+                            Text(iface.name.uppercased())
+                                .font(ZuroxiaTheme.font(12, weight: .bold))
+                                .tracking(1.5)
+                                .foregroundStyle(ZuroxiaTheme.textPrimary)
+                                
                             Spacer()
-                            VStack(alignment: .trailing) {
+                            
+                            VStack(alignment: .trailing, spacing: 4) {
                                 Text("\u{2191} \(FormatHelpers.bytesPerSecond(iface.sendRate))")
-                                    .foregroundStyle(.blue)
+                                    .font(ZuroxiaTheme.font(10, weight: .medium))
+                                    .foregroundStyle(ZuroxiaTheme.cyan)
                                 Text("\u{2193} \(FormatHelpers.bytesPerSecond(iface.receiveRate))")
-                                    .foregroundStyle(.green)
+                                    .font(ZuroxiaTheme.font(10, weight: .medium))
+                                    .foregroundStyle(ZuroxiaTheme.emerald)
                             }
-                            .font(.caption.monospacedDigit())
                         }
 
+                        Divider().background(ZuroxiaTheme.borderFaint)
+
                         HStack {
-                            Text("Total Sent: \(FormatHelpers.bytes(iface.bytesSent))")
-                                .foregroundStyle(.secondary)
+                            Text("TOTAL SENT: \(FormatHelpers.bytes(iface.bytesSent))")
+                                .font(ZuroxiaTheme.font(9, weight: .medium))
+                                .tracking(1.0)
+                                .foregroundStyle(ZuroxiaTheme.textSecondary)
                             Spacer()
-                            Text("Total Received: \(FormatHelpers.bytes(iface.bytesReceived))")
-                                .foregroundStyle(.secondary)
+                            Text("TOTAL REC: \(FormatHelpers.bytes(iface.bytesReceived))")
+                                .font(ZuroxiaTheme.font(9, weight: .medium))
+                                .tracking(1.0)
+                                .foregroundStyle(ZuroxiaTheme.textSecondary)
                         }
-                        .font(.caption.monospacedDigit())
                     }
-                    .padding()
-                    .background(.quaternary.opacity(0.2), in: RoundedRectangle(cornerRadius: 10))
+                    .padding(16)
+                    .cyberPanel()
                 }
 
                 if !net.topProcesses.isEmpty {
-                    SectionHeader("Top Processes by Network", icon: "arrow.up.arrow.down.circle", color: .teal)
+                    SectionHeader("TOP PROCESSES BY NETWORK", icon: "arrow.up.arrow.down.circle", color: ZuroxiaTheme.cyan)
 
-                    Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
+                    Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 10) {
                         GridRow {
-                            Text("Process")
-                                .fontWeight(.semibold)
+                            Text("PROCESS IDENTIFIER")
                                 .frame(minWidth: 120, alignment: .leading)
-                            Text("Sent")
-                                .fontWeight(.semibold)
+                            Text("SENT")
                                 .frame(width: 90, alignment: .trailing)
-                            Text("Received")
-                                .fontWeight(.semibold)
+                            Text("RECEIVED")
                                 .frame(width: 90, alignment: .trailing)
                         }
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(ZuroxiaTheme.font(9, weight: .bold))
+                        .tracking(1.5)
+                        .foregroundStyle(ZuroxiaTheme.textMuted)
 
-                        Divider()
+                        Divider().background(ZuroxiaTheme.borderFaint)
 
                         ForEach(net.topProcesses) { proc in
                             GridRow {
                                 Text(proc.name)
+                                    .font(ZuroxiaTheme.font(11, weight: .medium))
+                                    .foregroundStyle(ZuroxiaTheme.textPrimary)
                                     .lineLimit(1)
                                     .frame(minWidth: 120, alignment: .leading)
                                 Text(FormatHelpers.bytes(proc.bytesSent))
-                                    .monospacedDigit()
+                                    .font(ZuroxiaTheme.font(10))
                                     .frame(width: 90, alignment: .trailing)
-                                    .foregroundStyle(.blue)
+                                    .foregroundStyle(ZuroxiaTheme.cyan)
                                 Text(FormatHelpers.bytes(proc.bytesReceived))
-                                    .monospacedDigit()
+                                    .font(ZuroxiaTheme.font(10))
                                     .frame(width: 90, alignment: .trailing)
-                                    .foregroundStyle(.green)
+                                    .foregroundStyle(ZuroxiaTheme.emerald)
                             }
-                            .font(.system(.body, design: .monospaced))
                         }
                     }
-                    .padding()
-                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                    .padding(16)
+                    .cyberPanel()
                 }
             }
+            .padding()
         }
+        .scrollContentBackground(.hidden)
+        .background(ZuroxiaTheme.bgDark)
     }
 }

@@ -18,20 +18,30 @@ public struct DetailWindow: View {
         NavigationSplitView {
             List(selection: $appState.selectedTab) {
                 ForEach(AppState.DetailTab.grouped, id: \.0) { section, tabs in
-                    Section(section.rawValue) {
+                    Section {
                         ForEach(tabs) { tab in
                             Label {
-                                Text(tab.rawValue)
+                                Text(tab.rawValue.uppercased())
+                                    .font(ZuroxiaTheme.font(11, weight: .medium))
+                                    .tracking(2.0)
                             } icon: {
                                 Image(systemName: tab.icon)
-                                    .foregroundStyle(tab.color)
+                                    .foregroundStyle(appState.selectedTab == tab ? ZuroxiaTheme.cyan : tab.color)
+                                    .cyberGlow(color: appState.selectedTab == tab ? ZuroxiaTheme.cyan : .clear)
                             }
                             .tag(tab)
                         }
+                    } header: {
+                        Text(section.rawValue.uppercased())
+                            .font(ZuroxiaTheme.font(9, weight: .bold))
+                            .tracking(3.0)
+                            .foregroundStyle(ZuroxiaTheme.textMuted)
                     }
                 }
             }
-            .navigationSplitViewColumnWidth(min: 160, ideal: 190)
+            .scrollContentBackground(.hidden)
+            .background(ZuroxiaTheme.bgPanel)
+            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
         } detail: {
             Group {
                 switch appState.selectedTab {
@@ -62,38 +72,44 @@ public struct DetailWindow: View {
             .id(appState.selectedTab)
             .transition(.opacity)
             .animation(.easeInOut(duration: 0.2), value: appState.selectedTab)
-            .padding()
+            .background(ZuroxiaTheme.bgDark)
         }
+        .applyZuroxiaEnvironment()
         .toolbar {
             ToolbarItem(placement: .status) {
                 HStack(spacing: 12) {
                     // CPU pill
-                    HStack(spacing: 4) {
+                    HStack(spacing: 6) {
                         Image(systemName: "cpu")
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(ZuroxiaTheme.cyan)
                         Text(FormatHelpers.percentInt(monitor.currentSnapshot.cpu.totalUsage))
-                            .font(.caption.monospacedDigit().weight(.medium))
+                            .font(ZuroxiaTheme.font(10, weight: .bold))
+                            .foregroundStyle(ZuroxiaTheme.cyan)
                             .contentTransition(.numericText())
                     }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(.quaternary.opacity(0.5), in: Capsule())
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(ZuroxiaTheme.cyan.opacity(0.1), in: Capsule())
+                    .overlay(Capsule().stroke(ZuroxiaTheme.cyan.opacity(0.3), lineWidth: 1))
 
                     // Thermal pill
-                    HStack(spacing: 4) {
+                    HStack(spacing: 6) {
                         Image(systemName: monitor.currentSnapshot.thermal.level.icon)
                             .font(.caption2)
-                        Text(monitor.currentSnapshot.thermal.level.rawValue)
-                            .font(.caption.weight(.medium))
+                            .foregroundStyle(monitor.currentSnapshot.thermal.level.color)
+                        Text(monitor.currentSnapshot.thermal.level.rawValue.uppercased())
+                            .font(ZuroxiaTheme.font(10, weight: .bold))
+                            .tracking(1.0)
+                            .foregroundStyle(monitor.currentSnapshot.thermal.level.color)
                     }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
                     .background(
-                        monitor.currentSnapshot.thermal.level.color.opacity(0.15),
+                        monitor.currentSnapshot.thermal.level.color.opacity(0.1),
                         in: Capsule()
                     )
-                    .foregroundStyle(monitor.currentSnapshot.thermal.level.color)
+                    .overlay(Capsule().stroke(monitor.currentSnapshot.thermal.level.color.opacity(0.3), lineWidth: 1))
                 }
             }
 
@@ -101,9 +117,9 @@ public struct DetailWindow: View {
                 Button {
                     CSVExporter.saveWithPanel(history: monitor.history)
                 } label: {
-                    Label("Export CSV", systemImage: "square.and.arrow.up")
+                    Label("Export CSV", systemImage: "square.and.arrow.down")
                 }
-                .help("Export metrics history to CSV")
+                .help("Export telemetry to CSV")
             }
         }
         // Keyboard shortcuts for tab switching

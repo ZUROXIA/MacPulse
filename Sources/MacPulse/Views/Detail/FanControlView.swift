@@ -26,7 +26,7 @@ public struct FanControlView: View {
 
     public var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 24) {
                 // Header card
                 HStack(spacing: 30) {
                     GaugeView(
@@ -36,67 +36,85 @@ public struct FanControlView: View {
                     )
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Fan Control")
-                            .font(.title2.bold())
-                        Text("\(fans.count) fan\(fans.count == 1 ? "" : "s") detected")
-                            .foregroundStyle(.secondary)
+                        Text("THERMAL CONTROL")
+                            .font(ZuroxiaTheme.font(16, weight: .bold))
+                            .tracking(2.0)
+                            .foregroundStyle(ZuroxiaTheme.textPrimary)
+                            
+                        Text("\(fans.count) FAN\(fans.count == 1 ? "" : "S") DETECTED")
+                            .font(ZuroxiaTheme.font(10, weight: .medium))
+                            .tracking(1.5)
+                            .foregroundStyle(ZuroxiaTheme.textMuted)
+                            
                         if let avgRPM = averageRPM {
-                            Text("\(avgRPM) RPM avg")
-                                .font(.title.monospacedDigit())
-                                .foregroundStyle(.cyan)
+                            Text("\(avgRPM) RPM AVG")
+                                .font(ZuroxiaTheme.font(24, weight: .light))
+                                .foregroundStyle(ZuroxiaTheme.cyan)
                                 .contentTransition(.numericText())
                         }
                     }
 
                     Spacer()
                 }
-                .padding()
-                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
+                .padding(24)
+                .cyberPanel(borderColor: ZuroxiaTheme.borderLight)
 
                 // Sandbox banner
                 if ProcessHelper.isSandboxed {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 12) {
                         Image(systemName: "lock.shield")
+                            .font(.title2)
                             .foregroundStyle(.orange)
-                        Text("Fan control requires running outside the App Sandbox. Speed changes may not take effect.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .cyberGlow(color: .orange)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("SANDBOX RESTRICTIONS ACTIVE")
+                                .font(ZuroxiaTheme.font(10, weight: .bold))
+                                .tracking(1.5)
+                                .foregroundStyle(ZuroxiaTheme.textPrimary)
+                            Text("FAN CONTROL REQUIRES ELEVATED PRIVILEGES OUTSIDE THE APP STORE SANDBOX.")
+                                .font(ZuroxiaTheme.font(9, weight: .medium))
+                                .tracking(1.0)
+                                .foregroundStyle(ZuroxiaTheme.textSecondary)
+                        }
                     }
-                    .padding(10)
-                    .background(.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+                    .padding(16)
+                    .cyberPanel(borderColor: .orange.opacity(0.3))
                     .accessibilityLabel("Fan control limited by sandbox")
                 }
 
                 // Profile picker
-                SectionHeader("Speed Profile", icon: "slider.horizontal.3", color: .cyan)
+                SectionHeader("SPEED PROFILE", icon: "slider.horizontal.3", color: ZuroxiaTheme.cyan)
 
-                HStack(spacing: 6) {
+                HStack(spacing: 8) {
                     ForEach(FanProfile.allCases) { profile in
                         Button {
                             handleProfileSelection(profile)
                         } label: {
-                            HStack(spacing: 5) {
+                            HStack(spacing: 6) {
                                 Circle()
-                                    .fill(profile.color)
-                                    .frame(width: 7, height: 7)
-                                Text(profile.rawValue)
-                                    .font(.caption.weight(.medium))
+                                    .fill(profile == selectedProfile ? profile.color : profile.color.opacity(0.3))
+                                    .frame(width: 8, height: 8)
+                                    .cyberGlow(color: profile == selectedProfile ? profile.color : .clear)
+                                Text(profile.rawValue.uppercased())
+                                    .font(ZuroxiaTheme.font(10, weight: profile == selectedProfile ? .bold : .medium))
+                                    .tracking(1.5)
+                                    .foregroundStyle(profile == selectedProfile ? ZuroxiaTheme.textPrimary : ZuroxiaTheme.textMuted)
                             }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 7)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
                             .background(
                                 selectedProfile == profile
-                                    ? profile.color.opacity(0.15)
-                                    : Color.clear,
-                                in: RoundedRectangle(cornerRadius: 8)
+                                    ? profile.color.opacity(0.1)
+                                    : Color.clear
                             )
+                            .clipShape(ChamferedRectangle(cornerSize: 4))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 8)
+                                ChamferedRectangle(cornerSize: 4)
                                     .stroke(
                                         selectedProfile == profile
-                                            ? profile.color
-                                            : Color.secondary.opacity(0.2),
-                                        lineWidth: selectedProfile == profile ? 1.5 : 0.5
+                                            ? profile.color.opacity(0.5)
+                                            : ZuroxiaTheme.borderFaint,
+                                        lineWidth: 1
                                     )
                             )
                         }
@@ -105,18 +123,19 @@ public struct FanControlView: View {
                 }
                 .accessibilityHint("Select a fan speed profile")
 
-                HStack(spacing: 4) {
+                HStack(spacing: 8) {
                     Image(systemName: "speaker.wave.2")
                         .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                    Text(selectedProfile.noiseEstimate)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(ZuroxiaTheme.textMuted)
+                    Text("ACOUSTIC PROFILE: \(selectedProfile.noiseEstimate.uppercased())")
+                        .font(ZuroxiaTheme.font(9, weight: .medium))
+                        .tracking(1.5)
+                        .foregroundStyle(ZuroxiaTheme.textSecondary)
                 }
 
                 // Per-fan cards
                 if !fans.isEmpty {
-                    SectionHeader("Active Fans", icon: "fan", color: .cyan)
+                    SectionHeader("ACTIVE EXHAUSTS", icon: "fan", color: ZuroxiaTheme.cyan)
 
                     ForEach(fans) { fan in
                         fanCard(fan)
@@ -126,7 +145,7 @@ public struct FanControlView: View {
                 // RPM history chart
                 let rpmHistory = monitor.history.fanRPMHistory
                 if !rpmHistory.isEmpty {
-                    SectionHeader("RPM Over Time", icon: "chart.xyaxis.line", color: .cyan)
+                    SectionHeader("RPM HISTORY", icon: "chart.xyaxis.line", color: ZuroxiaTheme.cyan)
 
                     Group {
                         if rpmHistory.count == 2,
@@ -134,17 +153,18 @@ public struct FanControlView: View {
                             DualLineChart(
                                 data1: rpmHistory[0],
                                 data2: rpmHistory[1],
-                                color1: fanChartColor(index: 0),
-                                color2: fanChartColor(index: 1),
+                                color1: ZuroxiaTheme.cyan,
+                                color2: ZuroxiaTheme.purple,
                                 label1: "Fan 1 RPM",
                                 label2: "Fan 2 RPM"
                             )
                         } else {
                             ForEach(Array(rpmHistory.enumerated()), id: \.offset) { index, history in
                                 if !history.isEmpty {
-                                    Text("Fan \(index + 1)")
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
+                                    Text("FAN \(index + 1)")
+                                        .font(ZuroxiaTheme.font(10, weight: .bold))
+                                        .tracking(1.5)
+                                        .foregroundStyle(ZuroxiaTheme.textMuted)
 
                                     LiveChart(
                                         data: history,
@@ -155,11 +175,14 @@ public struct FanControlView: View {
                             }
                         }
                     }
-                    .padding()
-                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                    .padding(16)
+                    .cyberPanel()
                 }
             }
+            .padding()
         }
+        .scrollContentBackground(.hidden)
+        .background(ZuroxiaTheme.bgDark)
         .onAppear {
             if !didLoadProfile {
                 let saved = UserDefaults.standard.string(forKey: "fan.profile") ?? "Auto"
@@ -173,14 +196,14 @@ public struct FanControlView: View {
                 selectedProfile = profile
             }
         }
-        .alert("Switch Fan Profile?", isPresented: Binding(
+        .alert("OVERRIDE THERMAL CONTROLS?", isPresented: Binding(
             get: { pendingProfile != nil },
             set: { if !$0 { pendingProfile = nil } }
         )) {
-            Button("Cancel", role: .cancel) {
+            Button("CANCEL", role: .cancel) {
                 pendingProfile = nil
             }
-            Button("Switch") {
+            Button("ENGAGE") {
                 if let profile = pendingProfile {
                     selectedProfile = profile
                     applyProfile(profile)
@@ -189,59 +212,71 @@ public struct FanControlView: View {
             }
         } message: {
             if let profile = pendingProfile {
-                Text("This will switch from automatic fan control to \(profile.rawValue) mode. Fan speeds will be manually set.")
+                Text("THIS WILL BYPASS HARDWARE AUTOMATIC FAN CONTROL AND ENGAGE \(profile.rawValue.uppercased()) MODE. MANUAL RPM ENFORCEMENT WILL BE ACTIVE.")
+                    .font(ZuroxiaTheme.font(12))
             }
         }
-        .alert("Fan Control Error", isPresented: $smcError) {
-            Button("OK", role: .cancel) {}
+        .alert("SMC INTERFACE ERROR", isPresented: $smcError) {
+            Button("ACKNOWLEDGE", role: .cancel) {}
         } message: {
-            Text("Failed to apply fan settings. SMC access may be restricted.")
+            Text("FAILED TO WRITE TARGET RPM TO SYSTEM MANAGEMENT CONTROLLER. ELEVATED PRIVILEGES MAY BE REQUIRED.")
+                .font(ZuroxiaTheme.font(12))
         }
     }
 
     @ViewBuilder
     private func fanCard(_ fan: FanInfo) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
                 TimelineView(.animation) { timeline in
                     Image(systemName: "fan")
-                        .font(.title3)
-                        .foregroundStyle(.cyan)
+                        .font(.title2)
+                        .foregroundStyle(ZuroxiaTheme.cyan)
+                        .cyberGlow(color: ZuroxiaTheme.cyan)
                         .rotationEffect(.degrees(
                             timeline.date.timeIntervalSinceReferenceDate * rotationSpeed(rpm: fan.rpm)
                         ))
                 }
-                Text("Fan \(fan.index + 1)")
-                    .fontWeight(.medium)
+                Text("FAN \(fan.index + 1)")
+                    .font(ZuroxiaTheme.font(14, weight: .bold))
+                    .tracking(2.0)
+                    .foregroundStyle(ZuroxiaTheme.textPrimary)
                 Spacer()
                 Text("\(fan.rpm)")
-                    .font(.title2.monospacedDigit())
-                    .foregroundStyle(.blue)
+                    .font(ZuroxiaTheme.font(24, weight: .light))
+                    .foregroundStyle(ZuroxiaTheme.cyan)
                     .contentTransition(.numericText())
                 Text("RPM")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(ZuroxiaTheme.font(10, weight: .medium))
+                    .tracking(1.5)
+                    .foregroundStyle(ZuroxiaTheme.textMuted)
             }
 
             if fan.maxRPM > 0 {
                 ProgressView(value: Double(fan.rpm), total: Double(fan.maxRPM))
                     .tint(fanColor(rpm: fan.rpm, max: fan.maxRPM))
+                    .cyberGlow(color: fanColor(rpm: fan.rpm, max: fan.maxRPM))
 
                 HStack {
-                    Text("\(fan.minRPM) min")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                    Text("MIN: \(fan.minRPM)")
+                        .font(ZuroxiaTheme.font(9, weight: .medium))
+                        .tracking(1.0)
+                        .foregroundStyle(ZuroxiaTheme.textSecondary)
                     Spacer()
-                    Text("\(fan.maxRPM) max")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                    Text("MAX: \(fan.maxRPM)")
+                        .font(ZuroxiaTheme.font(9, weight: .medium))
+                        .tracking(1.0)
+                        .foregroundStyle(ZuroxiaTheme.textSecondary)
                 }
             }
 
             if selectedProfile == .custom && fan.maxRPM > 0 {
-                HStack {
-                    Text("Target:")
-                        .font(.caption)
+                HStack(spacing: 16) {
+                    Text("TARGET")
+                        .font(ZuroxiaTheme.font(10, weight: .bold))
+                        .tracking(1.5)
+                        .foregroundStyle(ZuroxiaTheme.textSecondary)
+                        
                     Slider(
                         value: Binding(
                             get: { fanOverrides[fan.index] ?? Double(fan.minRPM) },
@@ -253,14 +288,18 @@ public struct FanControlView: View {
                         in: Double(fan.minRPM)...Double(fan.maxRPM),
                         step: 100
                     )
+                    .tint(ZuroxiaTheme.cyan)
+                    
                     Text("\(Int(fanOverrides[fan.index] ?? Double(fan.minRPM))) RPM")
-                        .font(.caption.monospacedDigit())
-                        .frame(width: 70, alignment: .trailing)
+                        .font(ZuroxiaTheme.font(11, weight: .bold))
+                        .foregroundStyle(ZuroxiaTheme.cyan)
+                        .frame(width: 80, alignment: .trailing)
                 }
+                .padding(.top, 8)
             }
         }
-        .padding()
-        .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 10))
+        .padding(24)
+        .cyberPanel(borderColor: ZuroxiaTheme.borderLight)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Fan \(fan.index + 1): \(fan.rpm) of \(fan.maxRPM) RPM")
     }
@@ -314,20 +353,20 @@ public struct FanControlView: View {
     }
 
     private var gaugeColor: Color {
-        if avgFraction > 0.8 { return .red }
+        if avgFraction > 0.8 { return ZuroxiaTheme.crimson }
         if avgFraction > 0.5 { return .orange }
-        return .green
+        return ZuroxiaTheme.emerald
     }
 
     private func fanColor(rpm: Int, max: Int) -> Color {
         let ratio = Double(rpm) / Double(max)
-        if ratio > 0.8 { return .red }
+        if ratio > 0.8 { return ZuroxiaTheme.crimson }
         if ratio > 0.5 { return .orange }
-        return .green
+        return ZuroxiaTheme.emerald
     }
 
     private func fanChartColor(index: Int) -> Color {
-        let colors: [Color] = [.blue, .cyan, .teal, .mint]
+        let colors: [Color] = [ZuroxiaTheme.cyan, ZuroxiaTheme.purple, ZuroxiaTheme.emerald, .orange]
         return colors[index % colors.count]
     }
 }

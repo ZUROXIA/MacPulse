@@ -12,12 +12,25 @@ public struct SectionHeader: View {
     }
 
     public var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             Image(systemName: icon)
                 .foregroundStyle(color)
-                .font(.subheadline)
-            Text(title)
-                .font(.headline)
+                .font(.system(size: 14, weight: .light))
+                .cyberGlow(color: color)
+            
+            Text(title.uppercased())
+                .font(ZuroxiaTheme.font(10, weight: .medium))
+                .tracking(2.0)
+                .foregroundStyle(.gray)
+            
+            Spacer()
         }
+        .padding(.bottom, 8)
+        .overlay(
+            Rectangle()
+                .frame(height: 1)
+                .foregroundStyle(ZuroxiaTheme.borderFaint),
+            alignment: .bottom
+        )
     }
 }

@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 public struct ProcessListView: View {
     public let monitor: SystemMonitor
@@ -18,7 +19,7 @@ public struct ProcessListView: View {
 
     public var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 24) {
                 // Header card
                 HStack(spacing: 30) {
                     GaugeView(
@@ -26,22 +27,27 @@ public struct ProcessListView: View {
                         value: sortByMemory
                             ? monitor.currentSnapshot.memory.usedFraction
                             : monitor.currentSnapshot.cpu.totalUsage,
-                        color: sortByMemory ? .orange : .blue
+                        color: sortByMemory ? ZuroxiaTheme.purple : ZuroxiaTheme.cyan
                     )
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Top Processes")
-                            .font(.title2.bold())
+                        Text("PROCESS MATRIX")
+                            .font(ZuroxiaTheme.font(16, weight: .bold))
+                            .tracking(2.0)
+                            .foregroundStyle(ZuroxiaTheme.textPrimary)
+                            
                         if let top = topProcess {
-                            Text("Highest: \(top.name)")
-                                .foregroundStyle(.secondary)
+                            Text("HIGHEST LOAD: \(top.name.uppercased())")
+                                .font(ZuroxiaTheme.font(10, weight: .medium))
+                                .tracking(1.5)
+                                .foregroundStyle(ZuroxiaTheme.textMuted)
                         }
                     }
 
                     Spacer()
                 }
-                .padding()
-                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
+                .padding(24)
+                .cyberPanel(borderColor: ZuroxiaTheme.borderLight)
 
                 Picker("Sort by", selection: $sortByMemory) {
                     Text("CPU Usage").tag(false)
@@ -49,6 +55,7 @@ public struct ProcessListView: View {
                 }
                 .pickerStyle(.segmented)
                 .frame(width: 250)
+                .padding(.bottom, 8)
 
                 let processes = sortByMemory
                     ? monitor.currentSnapshot.processes.topByMemory
@@ -56,107 +63,126 @@ public struct ProcessListView: View {
 
                 if processes.isEmpty && ProcessHelper.isSandboxed {
                     ContentUnavailableView(
-                        "Process Data Unavailable",
+                        "DATA UNAVAILABLE",
                         systemImage: "lock.shield",
-                        description: Text("Process enumeration is not available in the App Store version. CPU and memory monitoring remain fully functional.")
+                        description: Text("PROCESS ENUMERATION BLOCKED BY APP SANDBOX")
                     )
-                    .padding()
-                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                    .padding(24)
+                    .cyberPanel()
                 } else if processes.isEmpty {
                     ContentUnavailableView(
-                        "No Process Data",
+                        "AWAITING TELEMETRY",
                         systemImage: "list.number",
-                        description: Text("Waiting for process data...")
+                        description: Text("GATHERING PROCESS DATA...")
                     )
-                    .padding()
-                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                    .padding(24)
+                    .cyberPanel()
                 } else {
-                    Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
+                    SectionHeader("ACTIVE PROCESSES", icon: "server.rack", color: ZuroxiaTheme.textPrimary)
+                        .padding(.bottom, 8)
+
+                    Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 10) {
                         GridRow {
                             Text("PID")
-                                .fontWeight(.semibold)
                                 .frame(width: 60, alignment: .leading)
-                            Text("Name")
-                                .fontWeight(.semibold)
+                            Text("IDENTIFIER")
                                 .frame(minWidth: 150, alignment: .leading)
-                            Text("CPU")
-                                .fontWeight(.semibold)
+                            Text("CPU LOAD")
                                 .frame(width: 80, alignment: .trailing)
-                            Text("Memory")
-                                .fontWeight(.semibold)
+                            Text("ALLOCATION")
                                 .frame(width: 100, alignment: .trailing)
-                            Text("")
-                                .frame(width: 32)
+                            Text("ACTION")
+                                .frame(width: 60, alignment: .center)
                         }
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(ZuroxiaTheme.font(9, weight: .bold))
+                        .tracking(1.5)
+                        .foregroundStyle(ZuroxiaTheme.textMuted)
 
-                        Divider()
+                        Divider().background(ZuroxiaTheme.borderFaint)
 
                         ForEach(processes) { proc in
                             GridRow {
                                 Text("\(proc.pid)")
-                                    .monospacedDigit()
+                                    .font(ZuroxiaTheme.font(10, weight: .medium))
+                                    .foregroundStyle(ZuroxiaTheme.textMuted)
                                     .frame(width: 60, alignment: .leading)
+                                    
                                 Text(proc.name)
+                                    .font(ZuroxiaTheme.font(11, weight: .medium))
+                                    .foregroundStyle(ZuroxiaTheme.textPrimary)
                                     .lineLimit(1)
                                     .frame(minWidth: 150, alignment: .leading)
+                                    
                                 Text(FormatHelpers.percent(proc.cpuUsage))
-                                    .monospacedDigit()
+                                    .font(ZuroxiaTheme.font(10, weight: .bold))
                                     .frame(width: 80, alignment: .trailing)
                                     .foregroundStyle(cpuColor(proc.cpuUsage))
+                                    
                                 Text(FormatHelpers.bytes(proc.memoryBytes))
-                                    .monospacedDigit()
+                                    .font(ZuroxiaTheme.font(10, weight: .bold))
                                     .frame(width: 100, alignment: .trailing)
+                                    .foregroundStyle(ZuroxiaTheme.textSecondary)
+                                    
                                 if !ProcessHelper.isSandboxed && ProcessHelper.isSafeToTerminate(pid: proc.pid) {
                                     Button {
                                         terminateTarget = proc
                                     } label: {
-                                        Image(systemName: "xmark.circle.fill")
-                                            .foregroundStyle(.red.opacity(0.7))
+                                        Text("KILL")
+                                            .font(ZuroxiaTheme.font(9, weight: .bold))
+                                            .tracking(1.0)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(Color.clear)
+                                            .foregroundStyle(ZuroxiaTheme.crimson.opacity(0.8))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 2)
+                                                    .stroke(ZuroxiaTheme.crimson.opacity(0.5), lineWidth: 1)
+                                            )
                                     }
                                     .buttonStyle(.plain)
                                     .help("Terminate \(proc.name)")
                                     .accessibilityLabel("Terminate \(proc.name)")
-                                    .frame(width: 32)
+                                    .frame(width: 60, alignment: .center)
                                 } else {
                                     Color.clear
-                                        .frame(width: 32)
+                                        .frame(width: 60)
                                 }
                             }
-                            .font(.system(.body, design: .monospaced))
                         }
                     }
-                    .padding()
-                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                    .padding(24)
+                    .cyberPanel()
 
                     // Usage chart
                     SectionHeader(
-                        "\(sortByMemory ? "Memory" : "CPU") Usage Over Time",
+                        "\(sortByMemory ? "MEMORY" : "CPU") USAGE HISTORY",
                         icon: "chart.xyaxis.line",
-                        color: sortByMemory ? .orange : .blue
+                        color: sortByMemory ? ZuroxiaTheme.purple : ZuroxiaTheme.cyan
                     )
 
                     LiveChart(
                         data: sortByMemory
                             ? monitor.history.memoryHistory
                             : monitor.history.cpuHistory,
-                        color: sortByMemory ? .orange : .blue,
+                        color: sortByMemory ? ZuroxiaTheme.purple : ZuroxiaTheme.cyan,
                         label: sortByMemory ? "Memory" : "CPU",
                         yDomain: 0...1.0,
                         formatAsPercent: true
                     )
-                    .padding()
-                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                    .padding(16)
+                    .cyberPanel()
                 }
             }
+            .padding()
         }
-        .alert("Terminate Process", isPresented: .init(
+        .scrollContentBackground(.hidden)
+        .background(ZuroxiaTheme.bgDark)
+        .alert("TERMINATE PROCESS", isPresented: .init(
             get: { terminateTarget != nil },
             set: { if !$0 { terminateTarget = nil } }
         )) {
-            Button("Cancel", role: .cancel) { terminateTarget = nil }
-            Button("Terminate", role: .destructive) {
+            Button("CANCEL", role: .cancel) { terminateTarget = nil }
+            Button("TERMINATE", role: .destructive) {
                 if let proc = terminateTarget {
                     _ = ProcessHelper.terminateProcess(pid: proc.pid)
                 }
@@ -164,14 +190,15 @@ public struct ProcessListView: View {
             }
         } message: {
             if let proc = terminateTarget {
-                Text("Are you sure you want to terminate \"\(proc.name)\" (PID \(proc.pid))?")
+                Text("ARE YOU SURE YOU WANT TO TERMINATE \"\(proc.name)\" (PID \(proc.pid))?")
+                    .font(ZuroxiaTheme.font(12))
             }
         }
     }
 
     private func cpuColor(_ usage: Double) -> Color {
-        if usage > 0.5 { return .red }
+        if usage > 0.5 { return ZuroxiaTheme.crimson }
         if usage > 0.1 { return .orange }
-        return .primary
+        return ZuroxiaTheme.textPrimary
     }
 }

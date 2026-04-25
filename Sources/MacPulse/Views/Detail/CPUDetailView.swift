@@ -9,120 +9,137 @@ public struct CPUDetailView: View {
 
     public var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 24) {
                 // Header card
                 HStack(spacing: 30) {
                     GaugeView(
                         title: "Total CPU",
                         value: monitor.currentSnapshot.cpu.totalUsage,
-                        color: .blue
+                        color: ZuroxiaTheme.cyan
                     )
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("CPU Usage")
-                            .font(.title2.bold())
-                        Text("\(monitor.currentSnapshot.cpu.perCoreUsage.count) cores")
-                            .foregroundStyle(.secondary)
+                        Text("PROCESSOR LOAD")
+                            .font(ZuroxiaTheme.font(16, weight: .bold))
+                            .tracking(2.0)
+                            .foregroundStyle(ZuroxiaTheme.cyan)
+                            .cyberGlow(color: ZuroxiaTheme.cyan)
+                            
+                        Text("\(monitor.currentSnapshot.cpu.perCoreUsage.count) CORES ACTIVE")
+                            .font(ZuroxiaTheme.font(10, weight: .medium))
+                            .tracking(1.5)
+                            .foregroundStyle(ZuroxiaTheme.textMuted)
+                            
                         Text(FormatHelpers.percent(monitor.currentSnapshot.cpu.totalUsage))
-                            .font(.title.monospacedDigit())
-                            .foregroundStyle(.blue)
+                            .font(ZuroxiaTheme.font(32, weight: .light))
+                            .foregroundStyle(ZuroxiaTheme.textPrimary)
                             .contentTransition(.numericText())
                     }
 
                     Spacer()
 
-                    VStack(alignment: .trailing, spacing: 8) {
+                    VStack(alignment: .trailing, spacing: 10) {
                         if let cpuTemp = monitor.currentSnapshot.temperature.cpuTemp {
-                            HStack(spacing: 4) {
+                            HStack(spacing: 8) {
                                 Image(systemName: "thermometer")
                                     .foregroundStyle(tempColor(cpuTemp))
+                                    .cyberGlow(color: tempColor(cpuTemp))
                                 Text(String(format: "%.0f\u{00B0}C", cpuTemp))
-                                    .font(.title2.monospacedDigit())
+                                    .font(ZuroxiaTheme.font(16, weight: .bold))
                                     .foregroundStyle(tempColor(cpuTemp))
                             }
                         }
                         if let gpuTemp = monitor.currentSnapshot.temperature.gpuTemp {
-                            HStack(spacing: 4) {
+                            HStack(spacing: 8) {
                                 Text("GPU")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .font(ZuroxiaTheme.font(9, weight: .medium))
+                                    .tracking(2.0)
+                                    .foregroundStyle(ZuroxiaTheme.textMuted)
                                 Text(String(format: "%.0f\u{00B0}C", gpuTemp))
-                                    .font(.body.monospacedDigit())
+                                    .font(ZuroxiaTheme.font(14, weight: .bold))
                                     .foregroundStyle(tempColor(gpuTemp))
                             }
                         }
                         ForEach(monitor.currentSnapshot.temperature.fans) { fan in
-                            HStack(spacing: 4) {
+                            HStack(spacing: 8) {
                                 Image(systemName: "fan")
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(ZuroxiaTheme.textMuted)
                                 Text("\(fan.rpm) RPM")
-                                    .font(.caption.monospacedDigit())
-                                    .foregroundStyle(.secondary)
+                                    .font(ZuroxiaTheme.font(10, weight: .medium))
+                                    .tracking(1.0)
+                                    .foregroundStyle(ZuroxiaTheme.textSecondary)
                             }
                         }
                     }
                 }
-                .padding()
-                .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
+                .padding(24)
+                .cyberPanel(borderColor: ZuroxiaTheme.borderLight)
 
                 // Per-Core Usage
-                SectionHeader("Per-Core Usage", icon: "cpu", color: .blue)
+                SectionHeader("PER-CORE USAGE", icon: "cpu", color: ZuroxiaTheme.cyan)
 
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
                     ForEach(Array(monitor.currentSnapshot.cpu.perCoreUsage.enumerated()), id: \.offset) { index, usage in
-                        VStack(spacing: 4) {
-                            Text("Core \(index)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                        VStack(spacing: 6) {
+                            Text("CORE \(index)")
+                                .font(ZuroxiaTheme.font(9, weight: .medium))
+                                .tracking(1.5)
+                                .foregroundStyle(ZuroxiaTheme.textSecondary)
+                                
                             ProgressView(value: min(usage, 1.0))
                                 .tint(coreColor(usage))
+                                
                             Text(FormatHelpers.percentInt(usage))
-                                .font(.caption.monospacedDigit())
+                                .font(ZuroxiaTheme.font(10, weight: .bold))
+                                .foregroundStyle(ZuroxiaTheme.textPrimary)
                         }
-                        .padding(8)
-                        .background(.quaternary.opacity(0.2), in: RoundedRectangle(cornerRadius: 8))
+                        .padding(12)
+                        .cyberPanel()
                     }
                 }
 
                 // CPU Usage Over Time
-                SectionHeader("CPU Usage Over Time", icon: "chart.xyaxis.line", color: .blue)
+                SectionHeader("CPU USAGE HISTORY", icon: "chart.xyaxis.line", color: ZuroxiaTheme.cyan)
 
                 LiveChart(
                     data: monitor.history.cpuHistory,
-                    color: .blue,
+                    color: ZuroxiaTheme.cyan,
                     label: "CPU",
                     yDomain: 0...1.0,
                     formatAsPercent: true
                 )
-                .padding()
-                .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                .padding(16)
+                .cyberPanel()
 
                 if !monitor.history.cpuTempHistory.isEmpty {
-                    SectionHeader("CPU Temperature Over Time", icon: "thermometer", color: .red)
+                    SectionHeader("THERMAL HISTORY", icon: "thermometer", color: ZuroxiaTheme.crimson)
 
                     LiveChart(
                         data: monitor.history.cpuTempHistory,
-                        color: .red,
+                        color: ZuroxiaTheme.crimson,
                         label: "Temperature (\u{00B0}C)"
                     )
-                    .padding()
-                    .background(.quaternary.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                    .padding(16)
+                    .cyberPanel()
                 }
 
             }
+            .padding()
         }
+        .scrollContentBackground(.hidden)
+        .background(ZuroxiaTheme.bgDark)
     }
 
     private func coreColor(_ usage: Double) -> Color {
-        if usage > 0.8 { return .red }
+        if usage > 0.8 { return ZuroxiaTheme.crimson }
         if usage > 0.5 { return .orange }
-        return .blue
+        return ZuroxiaTheme.cyan
     }
 
     private func tempColor(_ temp: Double) -> Color {
-        if temp > 90 { return .red }
+        if temp > 90 { return ZuroxiaTheme.crimson }
         if temp > 70 { return .orange }
-        return .green
+        return ZuroxiaTheme.emerald
     }
 
 }
