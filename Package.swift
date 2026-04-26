@@ -10,6 +10,7 @@ let package = Package(
             path: "Sources/MacPulse",
             linkerSettings: [
                 .linkedFramework("IOKit"),
+                .linkedFramework("CoreWLAN"),
             ]
         ),
         .executableTarget(

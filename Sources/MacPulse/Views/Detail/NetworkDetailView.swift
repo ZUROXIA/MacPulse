@@ -20,7 +20,7 @@ public struct NetworkDetailView: View {
                                 .font(.system(size: 14, weight: .bold))
                                 .foregroundStyle(ZuroxiaTheme.cyan)
                                 .cyberGlow(color: ZuroxiaTheme.cyan)
-                            Text("TX STREAM (UPLOAD)")
+                            Text("TX STREAM")
                                 .font(ZuroxiaTheme.font(10, weight: .bold))
                                 .tracking(2.0)
                                 .foregroundStyle(ZuroxiaTheme.textMuted)
@@ -38,7 +38,7 @@ public struct NetworkDetailView: View {
                                 .font(.system(size: 14, weight: .bold))
                                 .foregroundStyle(ZuroxiaTheme.emerald)
                                 .cyberGlow(color: ZuroxiaTheme.emerald)
-                            Text("RX STREAM (DOWNLOAD)")
+                            Text("RX STREAM")
                                 .font(ZuroxiaTheme.font(10, weight: .bold))
                                 .tracking(2.0)
                                 .foregroundStyle(ZuroxiaTheme.textMuted)
@@ -50,7 +50,33 @@ public struct NetworkDetailView: View {
                             .contentTransition(.numericText())
                     }
 
-                    Spacer()
+                    if let ssid = net.wifiSSID {
+                        Spacer()
+                        VStack(alignment: .trailing, spacing: 8) {
+                            HStack(spacing: 6) {
+                                Text("WLAN UPLINK")
+                                    .font(ZuroxiaTheme.font(10, weight: .bold))
+                                    .tracking(2.0)
+                                    .foregroundStyle(ZuroxiaTheme.textMuted)
+                                Image(systemName: "wifi")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(ZuroxiaTheme.cyan)
+                                    .cyberGlow(color: ZuroxiaTheme.cyan)
+                            }
+                            Text(ssid.uppercased())
+                                .font(ZuroxiaTheme.font(16, weight: .bold))
+                                .foregroundStyle(ZuroxiaTheme.textPrimary)
+                            
+                            if let rssi = net.wifiSignalStrength {
+                                Text("SIGNAL: \(rssi) DBM")
+                                    .font(ZuroxiaTheme.font(9, weight: .medium))
+                                    .tracking(1.0)
+                                    .foregroundStyle(ZuroxiaTheme.textSecondary)
+                            }
+                        }
+                    } else {
+                        Spacer()
+                    }
                 }
                 .padding(24)
                 .cyberPanel(borderColor: ZuroxiaTheme.borderLight)

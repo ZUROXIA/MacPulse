@@ -25,6 +25,17 @@ public struct MemoryCollector: MetricsCollector {
             free: free
         )
 
+        var swapUsed: UInt64 = 0
+        var swapTotal: UInt64 = 0
+        
+        var xsw = xsw_usage()
+        var size = MemoryLayout<xsw_usage>.stride
+        var mib = [CTL_VM, VM_SWAPUSAGE]
+        if sysctl(&mib, 2, &xsw, &size, nil, 0) == 0 {
+            swapUsed = UInt64(xsw.xsu_used)
+            swapTotal = UInt64(xsw.xsu_total)
+        }
+
         return MemoryMetrics(
             total: total,
             used: used,
@@ -32,7 +43,9 @@ public struct MemoryCollector: MetricsCollector {
             active: active,
             wired: wired,
             compressed: compressed,
-            pressureLevel: pressure
+            pressureLevel: pressure,
+            swapUsed: swapUsed,
+            swapTotal: swapTotal
         )
     }
 

@@ -125,4 +125,26 @@ public enum MachHelpers {
     public static var physicalMemory: UInt64 {
         ProcessInfo.processInfo.physicalMemory
     }
+
+    /// Returns the system load average for 1, 5, and 15 minutes.
+    public static func loadAverage() -> (Double, Double, Double)? {
+        var avg = [Double](repeating: 0, count: 3)
+        let result = getloadavg(&avg, 3)
+        guard result == 3 else { return nil }
+        return (avg[0], avg[1], avg[2])
+    }
+
+    /// Returns the system uptime in seconds.
+    public static func systemUptime() -> TimeInterval {
+        var boottime = timeval()
+        var size = MemoryLayout<timeval>.stride
+        var mib = [CTL_KERN, KERN_BOOTTIME]
+        
+        let result = sysctl(&mib, 2, &boottime, &size, nil, 0)
+        guard result == 0 else { return ProcessInfo.processInfo.systemUptime }
+        
+        let now = Date().timeIntervalSince1970
+        let boot = Double(boottime.tv_sec) + Double(boottime.tv_usec) / 1_000_000.0
+        return now - boot
+    }
 }

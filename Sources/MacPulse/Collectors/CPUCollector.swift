@@ -35,10 +35,14 @@ public struct CPUCollector: MetricsCollector {
         }
 
         let overall = totalAll > 0 ? Double(totalActive) / Double(totalAll) : 0
+        let loadAvg = MachHelpers.loadAverage() ?? (0, 0, 0)
+        let uptime = MachHelpers.systemUptime()
 
         return CPUMetrics(
             totalUsage: min(overall, 1.0),
-            perCoreUsage: perCore
+            perCoreUsage: perCore,
+            loadAverage: loadAvg,
+            uptime: uptime
         )
     }
 }

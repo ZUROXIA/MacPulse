@@ -58,6 +58,9 @@ public struct MemoryDetailView: View {
                     memoryRow("WIRED", value: mem.wired, color: ZuroxiaTheme.crimson)
                     memoryRow("COMPRESSED", value: mem.compressed, color: ZuroxiaTheme.cyan)
                     memoryRow("FREE", value: mem.free, color: ZuroxiaTheme.emerald)
+                    if mem.swapTotal > 0 {
+                        memoryRow("SWAP USED", value: mem.swapUsed, color: .orange)
+                    }
                 }
                 .padding(16)
                 .cyberPanel()

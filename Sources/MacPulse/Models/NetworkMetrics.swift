@@ -37,13 +37,17 @@ public struct NetworkMetrics: Sendable {
     public var totalSendRate: Double
     public var totalReceiveRate: Double
     public var topProcesses: [ProcessNetworkUsage]
+    public var wifiSSID: String?
+    public var wifiSignalStrength: Int? // RSSI
 
-    public static let zero = NetworkMetrics(interfaces: [], totalSendRate: 0, totalReceiveRate: 0, topProcesses: [])
+    public static let zero = NetworkMetrics(interfaces: [], totalSendRate: 0, totalReceiveRate: 0, topProcesses: [], wifiSSID: nil, wifiSignalStrength: nil)
 
-    public init(interfaces: [InterfaceTraffic], totalSendRate: Double, totalReceiveRate: Double, topProcesses: [ProcessNetworkUsage] = []) {
+    public init(interfaces: [InterfaceTraffic], totalSendRate: Double, totalReceiveRate: Double, topProcesses: [ProcessNetworkUsage] = [], wifiSSID: String? = nil, wifiSignalStrength: Int? = nil) {
         self.interfaces = interfaces
         self.totalSendRate = totalSendRate
         self.totalReceiveRate = totalReceiveRate
         self.topProcesses = topProcesses
+        self.wifiSSID = wifiSSID
+        self.wifiSignalStrength = wifiSignalStrength
     }
 }

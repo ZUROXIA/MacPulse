@@ -30,10 +30,22 @@ public struct CPUDetailView: View {
                             .tracking(1.5)
                             .foregroundStyle(ZuroxiaTheme.textMuted)
                             
-                        Text(FormatHelpers.percent(monitor.currentSnapshot.cpu.totalUsage))
-                            .font(ZuroxiaTheme.font(32, weight: .light))
-                            .foregroundStyle(ZuroxiaTheme.textPrimary)
-                            .contentTransition(.numericText())
+                        HStack(spacing: 12) {
+                            Text(FormatHelpers.percent(monitor.currentSnapshot.cpu.totalUsage))
+                                .font(ZuroxiaTheme.font(32, weight: .light))
+                                .foregroundStyle(ZuroxiaTheme.textPrimary)
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                let load = monitor.currentSnapshot.cpu.loadAverage
+                                Text("LOAD: \(String(format: "%.2f", load.0)) \(String(format: "%.2f", load.1)) \(String(format: "%.2f", load.2))")
+                                    .font(ZuroxiaTheme.font(8, weight: .bold))
+                                    .foregroundStyle(ZuroxiaTheme.textSecondary)
+                                Text("UPTIME: \(FormatHelpers.duration(seconds: Int(monitor.currentSnapshot.cpu.uptime)))")
+                                    .font(ZuroxiaTheme.font(8, weight: .bold))
+                                    .foregroundStyle(ZuroxiaTheme.textMuted)
+                            }
+                        }
+                        .contentTransition(.numericText())
                     }
 
                     Spacer()

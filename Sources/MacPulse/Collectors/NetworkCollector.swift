@@ -1,9 +1,11 @@
 import Foundation
 import Darwin
+import CoreWLAN
 
 public struct NetworkCollector: MetricsCollector {
     private var previousCounters: [String: (sent: UInt64, received: UInt64)] = [:]
     private var previousTime: Date?
+    private let wifiClient = CWWiFiClient.shared()
 
     public init() {}
 
@@ -51,12 +53,21 @@ public struct NetworkCollector: MetricsCollector {
         interfaces.sort { $0.name < $1.name }
 
         let topProcs = collectTopNetworkProcesses()
+        
+        var ssid: String?
+        var rssi: Int?
+        if let interface = wifiClient.interface(), interface.powerOn() {
+            ssid = interface.ssid()
+            rssi = interface.rssiValue()
+        }
 
         return NetworkMetrics(
             interfaces: interfaces,
             totalSendRate: totalSend,
             totalReceiveRate: totalRecv,
-            topProcesses: topProcs
+            topProcesses: topProcs,
+            wifiSSID: ssid,
+            wifiSignalStrength: rssi
         )
     }
 
