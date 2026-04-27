@@ -6,6 +6,9 @@ public struct TemperatureCollector: MetricsCollector {
     public func collect() -> TemperatureMetrics {
         let cpuTemp = SMCHelper.readCPUTemperature()
         let gpuTemp = SMCHelper.readGPUTemperature()
+        let power = SMCHelper.readSystemPower()
+        let amps = SMCHelper.readBatteryAmperage()
+        let volts = SMCHelper.readBatteryVoltage()
 
         let fanCount = SMCHelper.readFanCount()
         var fans: [FanInfo] = []
@@ -16,6 +19,13 @@ public struct TemperatureCollector: MetricsCollector {
             fans.append(FanInfo(index: i, rpm: rpm, minRPM: minRPM, maxRPM: maxRPM))
         }
 
-        return TemperatureMetrics(cpuTemp: cpuTemp, gpuTemp: gpuTemp, fans: fans)
+        return TemperatureMetrics(
+            cpuTemp: cpuTemp, 
+            gpuTemp: gpuTemp, 
+            fans: fans,
+            systemWatts: power,
+            batteryAmps: amps,
+            batteryVolts: volts
+        )
     }
 }

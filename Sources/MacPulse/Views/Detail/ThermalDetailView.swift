@@ -119,12 +119,29 @@ public struct ThermalDetailView: View {
                             .foregroundStyle(ZuroxiaTheme.textMuted)
                     }
                 }
-                .frame(height: 200)
+                .frame(height: 180)
                 .padding(16)
                 .cyberPanel()
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Thermal state history chart")
-                .accessibilityValue("Current level: \(thermal.level.rawValue)")
+
+                SectionHeader("ENERGY MATRIX", icon: "bolt.fill", color: ZuroxiaTheme.cyan)
+
+                HStack(spacing: 16) {
+                    energyCard(
+                        title: "POWER DRAW",
+                        value: monitor.currentSnapshot.temperature.systemWatts.map { String(format: "%.1f W", $0) } ?? "N/A",
+                        color: ZuroxiaTheme.cyan
+                    )
+                    energyCard(
+                        title: "AMPERAGE",
+                        value: monitor.currentSnapshot.temperature.batteryAmps.map { String(format: "%.2f A", $0) } ?? "N/A",
+                        color: ZuroxiaTheme.purple
+                    )
+                    energyCard(
+                        title: "VOLTAGE",
+                        value: monitor.currentSnapshot.temperature.batteryVolts.map { String(format: "%.1f V", $0) } ?? "N/A",
+                        color: ZuroxiaTheme.emerald
+                    )
+                }
 
                 // Fan summary
                 let fans = monitor.currentSnapshot.temperature.fans
@@ -172,5 +189,22 @@ public struct ThermalDetailView: View {
         if ratio > 0.8 { return ZuroxiaTheme.crimson }
         if ratio > 0.5 { return .orange }
         return ZuroxiaTheme.emerald
+    }
+
+    private func energyCard(title: String, value: String, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(ZuroxiaTheme.font(9, weight: .bold))
+                .tracking(1.5)
+                .foregroundStyle(ZuroxiaTheme.textMuted)
+            
+            Text(value)
+                .font(ZuroxiaTheme.font(20, weight: .light))
+                .foregroundStyle(ZuroxiaTheme.textPrimary)
+                .cyberGlow(color: color)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(20)
+        .cyberPanel()
     }
 }

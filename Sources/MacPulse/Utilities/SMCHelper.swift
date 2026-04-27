@@ -121,6 +121,29 @@ public enum SMCHelper {
         return writeSMCKey(key, byte0: byte0, byte1: byte1)
     }
 
+    /// Read system power consumption in Watts (PSTR).
+    public static func readSystemPower() -> Double? {
+        guard let bytes = readSMCKey("PSTR") else { return nil }
+        // flt format: 32-bit float or encoded
+        // For PSTR it's often a custom fixed point depending on model, but let's try a common decode
+        let raw = (Int(bytes.0) << 8) | Int(bytes.1)
+        return Double(raw) / 1000.0 // mW to Watts
+    }
+
+    /// Read battery amperage in Amps (IB0R).
+    public static func readBatteryAmperage() -> Double? {
+        guard let bytes = readSMCKey("IB0R") else { return nil }
+        let raw = Int16((Int(bytes.0) << 8) | Int(bytes.1))
+        return Double(raw) / 1000.0
+    }
+
+    /// Read battery voltage in Volts (VP0R).
+    public static func readBatteryVoltage() -> Double? {
+        guard let bytes = readSMCKey("VP0R") else { return nil }
+        let raw = (Int(bytes.0) << 8) | Int(bytes.1)
+        return Double(raw) / 1000.0
+    }
+
     // MARK: - Private
 
     private static func readTemperature(key: String) -> Double? {
